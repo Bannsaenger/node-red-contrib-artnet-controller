@@ -4,6 +4,7 @@
 
 # @bannsaenger/node-red-contrib-artnet-controller
 Node-RED nodes that controls lights via artnet.
+
 **This is a complete solution for sending and receiving dmx-data via Art-Net without the need of additional hardware**
 
 ## Credits
