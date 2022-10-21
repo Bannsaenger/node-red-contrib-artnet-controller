@@ -3,7 +3,7 @@
 [![NPM](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller.png?downloads=true)](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller/)
 
 # @bannsaenger/node-red-contrib-artnet-controller
-Node-RED nodes that controls lights via artnet
+Node-RED nodes that controls lights via artnet.
 **This is a complete solution for sending and receiving dmx-data via Art-Net without the need of additional hardware**
 
 ## Credits
