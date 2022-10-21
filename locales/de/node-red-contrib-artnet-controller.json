@@ -1,0 +1,45 @@
+{
+    "artnet": {
+        "status": {
+            "waiting": "Wartend",
+            "timeout": "Zeitablauf"
+        },
+        "label": {
+            "name": "Name",
+            "bind": "IP Adresse",
+            "port": "Port",
+            "sname": "Kurzname",
+            "lname": "Name",
+            "oemcode": "OEM-Code",
+            "debug": "Level",
+            "settings": "Einstellungen",
+            "refresh": "Refresh",
+            "savevalues": "Werte sichern",
+            "ignoreaddress": "Adresse ignorieren",
+            "outformat": "Format",
+            "sendonchange": "Nur Änderungen"
+        },
+        "description": {
+            "debug": "<b>Debug Ausgabe von <code>dmxlib</code></b><br>Log Ausgaben unterhalb von <code>warning</code> werden nur an die Konsole für debugging Zwecke gesendet"
+        },
+        "names": {
+            "allips": "An alle IPs binden"
+        },
+        "placeholder": {
+            "serialport": "z.B. /dev/ttyUSB0/"
+        },
+        "tip": {
+            "bind": "Tipp: An eine Adresse kann nur ein Port gebunden werden. Bitte beachten bei Auswahl von '0.0.0.0'.",
+            "port": "Tipp: Standard Port ist 6454. Kann 0 - 65535 sein.",
+            "oemcode": "Tipp: Standard Code ist 0x2908 (Manufacturer: margau ProductName: dmxnet), 0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub) oder jeder andere Hex Wert.",
+            "address": "Adresse an die gesendet wird.<br>Tipp: Standardmäßig wird hier der <b>Limited Broadcast</b> (255.255.255.255) verwendet, aber alle Formen von Broadcast (Local oder Directed) oder jede andere gültige Unicast Adresse sind möglich.",
+            "refresh": "Dieser Wert ist in <b>ms</b> (default 1000).<br>Tipp: Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. Wird ein Art-Dmx Wert geändert werden die Daten sofort gesendet.",
+            "savevalues": "Tipp: Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.",
+            "ignoreaddress": "Tipp: Wenn aktiviert werden alle Adressinformationen aus dem <code>msg</code> Objekt ignoriert. Ansonsten wird versucht ein passendes Universum innerhalb des Controllers zu finden. Wird kein passendes Universum gefunden wird die Message an den konfigurierten Sender weitergeleitet."
+        },
+        "errors": {
+            "missing-conf": "Fehlende serielle Konfiguration",
+            "list": "Auflistung der IP Adressen fehlgeschlagen. Versuchen Sie Node-RED neu zu starten."
+        }
+    }
+}

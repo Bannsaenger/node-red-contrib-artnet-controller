@@ -1,0 +1,45 @@
+{
+    "artnet": {
+        "status": {
+            "waiting": "waiting",
+            "timeout": "timeout"
+        },
+        "label": {
+            "name": "Name",
+            "bind": "IP address",
+            "port": "Port",
+            "sname": "Short Name",
+            "lname": "Name",
+            "oemcode": "OEM-Code",
+            "debug": "Level",
+            "settings": "Settings",
+            "refresh": "Refresh",
+            "savevalues": "Save values",
+            "ignoreaddress": "Ignore Address",
+            "outformat": "Format",
+            "sendonchange": "On change"
+        },
+        "description": {
+            "debug": "<b>Debug output from <code>dmxlib</code></b><br>Log output below <code>warning</code> are only send to the console for debuging purposes"
+        },
+        "names": {
+            "allips": "bind to all IPs"
+        },
+        "placeholder": {
+            "example": "for example: ..."
+        },
+        "tip": {
+            "bind": "Tip: Only one Port can be bound to one ip address. Please notice when selecting '0.0.0.0'.",
+            "port": "Tip: Default Port is 6454. Can be in the Range 0 - 65535",
+            "oemcode": "Tip: Default Code is 0x2908 (Manufacturer: margau ProductName: dmxnet), 0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub) or any Hex value.",
+            "address": "Address to send to.<br>Tip: By default this is the <b>limited broadcast</b> (255.255.255.255) but can be all forms of broadcast (local or directed) or any other valid unicast address",
+            "refresh": "This value is in <b>ms</b> (default 1000).<br>Tip: After this interval the Art-Dmx data will be resend regardless of whether the data has been changed. If any Art-Dmx value is changed the data will be sent immediatly.",
+            "savevalues": "Tip: When checked all DMX values are saved to context on close. So the DMX values are immediatly available after deploy.",
+            "ignoreaddress": "Tip: When checked all address information from the <code>msg</code> object will be ignored. Otherwise an attempt is made to find a matching universe inside this controller. If there is no matching universe the data is sent to the configured sender."
+        },
+        "errors": {
+            "missing-conf": "missing serial config",
+            "list": "Listing of ip addresses failed. Try to restart Node-RED."
+        }
+    }
+}

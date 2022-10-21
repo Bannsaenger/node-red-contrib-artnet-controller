@@ -1,0 +1,292 @@
+
+<script type="text/x-red" data-template-name="Art-Net Out">
+	<div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-artnetsender"><i class="fa fa-bookmark"></i> Sender</label>
+        <input type="text" id="node-input-artnetsender">
+    </div>
+    <div class="form-row">
+        <label for="node-input-ignoreaddress"><i class="fa fa-ban"></i> <span data-i18n="artnet.label.ignoreaddress"></span></label>
+        <input type="checkbox" id="node-input-ignoreaddress" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-tips" id="tip-ignoreaddress" hidden><span data-i18n="[html]artnet.tip.ignoreaddress"></span></div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Art-Net Out',{
+        category: 'output',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value: ""},
+            artnetsender: {value: "", type: "Art-Net Sender"},
+            ignoreaddress: {value: false}
+        },
+        inputs:1,
+        outputs:0,
+        align: "right",
+        icon: "light.png",
+        label: function() {
+            return this.name || "Art-Net Out";
+        },
+        oneditprepare: function () {
+            $('#node-input-ignoreaddress').on('focus', function () { $('#tip-ignoreaddress').show(); });
+            $('#node-input-ignoreaddress').on('blur', function () { $('#tip-ignoreaddress').hide(); });
+
+            $('#node-input-ignoreaddress').prop('checked', this.savevalues);
+        },
+        oneditsave: function () {
+            this.ignoreaddress = $('#node-input-ignoreaddress').prop('checked');
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="Art-Net In">
+	<div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.name"></span></label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-input-artnetcontroller"><i class="fa fa-bookmark"></i> Controller</label>
+        <input type="text" id="node-input-artnetcontroller">
+    </div>
+    <div class="form-row">
+        <label for="node-input-net"><i class="fa fa-cog"></i> Net</label>
+        <input type="text" id="node-input-net">
+    </div>
+    <div class="form-row">
+        <label for="node-input-subnet"><i class="fa fa-cogs"></i> Subnet</label>
+        <input type="text" id="node-input-subnet">
+    </div>
+    <div class="form-row">
+        <label for="node-input-universe"><i class="fa fa-globe"></i> Universe</label>
+        <input type="text" id="node-input-universe">
+    </div>
+    <div class="form-row">
+        <label for="node-input-outformat"><i class="fa fa-file-code-o"></i> <span data-i18n="artnet.label.outformat"></label>
+        <input type="text" id="node-input-outformat">
+    </div>
+    <div class="form-row">
+        <label for="node-input-sendonchange"><i class="fa fa-ban"></i> <span data-i18n="artnet.label.sendonchange"></span></label>
+        <input type="checkbox" id="node-input-sendonchange" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Art-Net In',{
+        category: 'input',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value: ""},
+            artnetcontroller: {value: "", type: "Art-Net Controller"},
+            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128))} },
+            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            outformat: {value: "buckets"},
+            sendonchange: {value: true}
+        },
+        inputs:0,
+        outputs:1,
+        align: "right",
+        icon: "light.png",
+        label: function() {
+            if (this.name) return this.name;
+            var controllerAddress = RED.nodes.node(this.artnetcontroller);
+            return controllerAddress ? ('In:' + this.net + ':' + this.subnet + ':' + this.universe + '-' + controllerAddress.bind) : 'Art-Net In';
+        },
+        oneditprepare: function() {
+            $('#node-input-outformat').typedInput({types:[{value: 'outformat', options: [{value: 'buckets', label: 'Buckets'},{value: 'buffer', label: 'Universe as Buffer'}]}]});
+            $('#node-input-outformat').typedInput('value', value);
+            $('#node-input-sendonchange').prop('checked', this.sendonchange);
+        },
+        oneditsave: function() {
+            this.outformat = $('#node-input-outformat').typedInput('value');
+            this.sendonchange = $('#node-input-sendonchange').prop('checked');
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="Art-Net Sender">
+	<div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.name"></span></label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+	<div class="form-row">
+        <label for="node-config-input-artnetcontroller"><i class="fa fa-bookmark"></i> Controller</label>
+        <input type="text" id="node-config-input-artnetcontroller">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-address"><i class="fa fa-server"></i> <span data-i18n="artnet.label.bind"></span></label>
+        <input type="text" id="node-config-input-address">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="fa fa-long-arrow-right"></i> <span data-i18n="artnet.label.port"></span></label>
+        <input type="text" id="node-config-input-port">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-net"><i class="fa fa-cog"></i> Net</label>
+        <input type="text" id="node-config-input-net">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-subnet"><i class="fa fa-cogs"></i> Subnet</label>
+        <input type="text" id="node-config-input-subnet">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-universe"><i class="fa fa-globe"></i> Universe</label>
+        <input type="text" id="node-config-input-universe">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-refresh"><i class="fa fa-clock-o"></i> <span data-i18n="artnet.label.refresh"></span></label>
+        <input type="text" id="node-config-input-refresh">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-savevalues"><i class="fa fa-hdd-o"></i> <span data-i18n="artnet.label.savevalues"></span></label>
+        <input type="checkbox" id="node-config-input-savevalues" style="display: inline-block; width: auto; vertical-align: top;">
+    </div>
+    <div class="form-tips" id="tip-address" hidden><span data-i18n="[html]artnet.tip.address"></span></div>
+    <div class="form-tips" id="tip-refresh" hidden><span data-i18n="[html]artnet.tip.refresh"></span></div>
+    <div class="form-tips" id="tip-savevalues" hidden><span data-i18n="[html]artnet.tip.savevalues"></span></div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Art-Net Sender',{
+        category: 'config',
+        defaults: {
+            name: {value: ""},
+            artnetcontroller: {value: "", type: "Art-Net Controller"},
+            address: {value: "127.0.0.1"},
+            port: {value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536))} },
+            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128))} },
+            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            refresh: {value: 1000, validate:RED.validators.number() },
+            savevalues: {value: true}
+        },
+        label: function() {
+            return this.name || this.net + ':' + this.subnet + ':' + this.universe + '-' + this.address;
+        },
+        oneditprepare: function () {
+            $('#node-config-input-address').on('focus', function () { $('#tip-address').show(); });
+            $('#node-config-input-address').on('blur', function () { $('#tip-address').hide(); });
+            $('#node-config-input-refresh').on('focus', function () { $('#tip-refresh').show(); });
+            $('#node-config-input-refresh').on('blur', function () { $('#tip-refresh').hide(); });
+            $('#node-config-input-savevalues').on('focus', function () { $('#tip-savevalues').show(); });
+            $('#node-config-input-savevalues').on('blur', function () { $('#tip-savevalues').hide(); });
+
+            $('#node-config-input-savevalues').prop('checked', this.savevalues);
+        },
+        oneditsave: function () {
+            this.savevalues = $('#node-config-input-savevalues').prop('checked');
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="Art-Net Controller">
+	<div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.name"></span></label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-bind"><i class="fa fa-server"></i> <span data-i18n="artnet.label.bind"></span></label>
+        <input type="text" id="node-config-input-bind">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port"><i class="fa fa-long-arrow-right"></i> <span data-i18n="artnet.label.port"></span></label>
+        <input type="text" id="node-config-input-port">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-oemcode"><i class="fa fa-certificate"></i> <span data-i18n="artnet.label.oemcode"></span></label>
+        <input type="text" id="node-config-input-oemcode">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-sname"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.sname"></span></label>
+        <input type="text" id="node-config-input-sname">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-lname"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.lname"></span></label>
+        <input type="text" id="node-config-input-lname">
+    </div>
+    <div class="form-row"><hr></div>
+    <div class="form-row">
+        <span data-i18n="[html]artnet.description.debug"></span>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-loglevel"><i class="fa fa-print"></i> <span data-i18n="artnet.label.debug"></span></label>
+        <input type="text" id="node-config-input-loglevel">
+    </div>
+    <div class="form-tips" id="tip-bind"><span data-i18n="artnet.tip.bind"></span></div>
+    <div class="form-tips" id="tip-port" hidden><span data-i18n="artnet.tip.port"></span></div>
+    <div class="form-tips" id="tip-oemcode"><span data-i18n="artnet.tip.oemcode"></span></div>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('Art-Net Controller', {
+        category: 'config',
+        defaults: {
+            name: {value: ""},
+            bind: { value: '', required: true },
+            port: { value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536))} },
+            sname: { value: 'dmxnet', validate:RED.validators.regex(/^.{0,17}$/) },
+            lname: { value: 'dmxnet - OpenSource ArtNet Transceiver', validate:RED.validators.regex(/^.{0,63}$/) },
+            oemcode: { value: '0x2908', validate:RED.validators.regex(/^0x\d\d\d\d$/) },
+            loglevel: { value: 'warn' }
+        },
+        label: function() {
+            return this.bind || 'No IP';
+        },
+        oneditprepare: function() {
+            var bind = this.bind;
+            try {
+                $.getJSON('ips',function(ips) {
+                    var inputOptions = {types:[{value: 'bind', options: []}]};
+                    for (var i = 0; i < ips.length; i++) {
+                        if (ips[i].name.includes('[IPv6]')) continue;   // for safety reasons. No V6 addresses will be sent
+                        inputOptions.types[0].options.push({value: ips[i].address, label: ips[i].name});
+                    }
+                    $('#node-config-input-bind').typedInput(inputOptions);
+                    $('#node-config-input-bind').typedInput('value', bind);
+                });
+            } 
+            catch(err) {
+                $('#node-config-input-bind').typedInput({types:[{value: 'bind', options: []}]});
+            }
+
+            $('#node-config-input-oemcode').typedInput({
+                default: this.oemcode,
+                types: [
+                    {value: '0x0000', label: '0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub)', hasValue: false},
+                    {value: '0x2908', label: '0x2908 (Manufacturer: margau ProductName: dmxnet)', hasValue: false},
+                    {value: 'other', label: 'other', icon:'red/images/typedInput/target.svg', validate: /^0x\d\d\d\d$/}
+                ]
+            });
+
+            $('#node-config-input-loglevel').typedInput({
+                types: [{
+                    value: 'loglevel',
+                    options: [
+                        {value: 'error', label: 'error'},
+                        {value: 'warn', label: 'warn (default)'},
+                        {value: 'info', label: 'info'},
+                        {value: 'verbose', label: 'verbose'},
+                        {value: 'debug', label: 'debug'},
+                        {value: 'silly', label: 'silly'}
+                    ]
+                }]
+            });
+            $('#node-config-input-port').on('focus', function () { $('#tip-port').show(); });
+            $('#node-config-input-port').on('blur', function () { $('#tip-port').hide(); });
+        },
+        oneditsave: function() {
+            this.bind = $('#node-config-input-bind').typedInput('value');
+
+            var myOemType = $('#node-config-input-oemcode').typedInput('type');
+            if (myOemType !== 'other') {
+                $('#node-config-input-oemcode').typedInput('value', myOemType);
+            }
+            this.oemcode = $('#node-config-input-oemcode').typedInput('value');
+            this.loglevel = $('#node-config-input-loglevel').typedInput('value');
+        }
+    });
+</script>

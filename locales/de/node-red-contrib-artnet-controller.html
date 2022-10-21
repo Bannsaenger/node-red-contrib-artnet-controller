@@ -1,0 +1,184 @@
+<script type="text/html" data-help-name="Art-Net Out">
+    <p>DMX Daten an eine Art-Net Sender Instanz senden.</p>
+    <p>Dieser Node wird verwendet um DMX Daten an eine Art-Net Sender Instance weiterzureichen.</p>
+    <p>Er muss mit einer gültigen Sender Instanz verbunden sein.</p>
+    <p>Im Allgemeinen werden die empfangenen Daten an die konfigurierte Sender Instanz weitergereicht. Wenn in den empfangenen Daten Adressinformationen enthalten sind,
+        hängt es von der Einstellung der <code>Adresse ignorieren</code> Checkbox ab wie die weitere Verarbeitung stattfindet.
+    </p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Zu sendende Daten</dd>
+        <dt class="optional">payload.channel <span class="property-type">number [1-512]</span></dt>
+        <dt class="optional">payload.value <span class="property-type">number [0-255]</span></dt>
+        <dd>z.B. ein einzelner Kanal. Weitere Möglichkeiten siehe unten.</dd>
+        <dt class="optional">payload.net <span class="property-type">number [0-15]</span></dt>
+        <dd>Netzadresse im Art-Net</dd>
+        <dt class="optional">payload.subnet <span class="property-type">number [0-15]</span></dt>
+        <dd>Subnetzadresse im Art-Net</dd>
+        <dt class="optional">payload.universe <span class="property-type">number [0-63]</span></dt>
+        <dd>Nummer des Universums im Art-Net</dd>
+    </dl>
+    <h4>Im <code>payload</code> Objekt können folgende Daten enthalten sein:</h4>
+    <h4>Ein einzelner Kanal</h4>
+<pre>
+msg.payload = {
+    channel: 1, // int: address in [1, 512]
+    value: 255  // int: value in [0, 255]
+};
+</pre>
+<h4>Oder mehrere Kanäle gleichzeitig</h4>
+<pre>
+msg.payload = {
+    buckets: [
+        {channel: 1, value: 255},
+        {channel: 4, value: 0},
+    ]
+};
+</pre>
+<h4>Es können auch automatische Veränderungen der Werte auf Zeit stattfinden. Entweder für einen einzelnen Kanal oder für mehrere Kanäle. 
+    Es muss dabei die 'transition' als auch die 'duration' in Millisekunden angegeben werden.</h4>
+<pre>
+msg.payload = {
+    transition: "linear",
+    duration: 5000,
+    buckets: [
+        {channel: 1, value: 255},
+        {channel: 4, value: 0},
+    ]
+}
+</pre>
+<h4>Für eine Bogen-Transition (movement by arc) müssen noch mehr Details angegeben werden</h4>
+<pre>
+msg.payload = {
+    transition: "arc",
+    duration: 2000,
+    arc: {
+        pan_channel: 1,
+        tilt_channel: 3,
+        pan_angle: 540,
+        tilt_angle: 255
+    },
+    start: {pan: 0, tilt: 44},
+    center: {pan: 127.5, tilt: 63.75},
+    end: {pan: 85, tilt: 44}
+};
+</pre>
+    <p>wobei</p>
+    <ul>
+        <li><code>arc</code> - Kanäle die in die Transition mit einbezogen werden sollen (pan and tilt channels)</li>
+        <li><code>start</code> - Startwerte der Kanäle (Start Punkt). Standard: Aktueller Wert des Kanals</li>
+        <li><code>center</code> - "Mittelpunkt" Werte</li>
+        <li><code>end</code> - Endwerte der Kanäle (End Punkt)</li>
+    </ul>
+    <p>Im obigen Beispiel startet der Moving Head bei {pan: 0, tilt: 44} hin zu {pan: 85, tilt: 44}. Mittelpunkt ({pan: 127.5, tilt: 63.75}) gibt den nominellen Kreismittelpunkt an</p>
+
+    <h3>Details</h3>
+    <h4>Adresse ignorieren</h4>
+    <p>Wenn aktiviert werden alle Adressinformationen aus dem <code>msg</code> Objekt ignoriert. Ansonsten wird versucht ein passendes Universum innerhalb des Controllers zu finden. 
+        Wird kein passendes Universum gefunden wird die Message an den konfigurierten Sender weitergeleitet.</p>
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://flows.nodered.org/node/node-red-contrib-artnet">node-red-contrib-artnet</a> - Die Basis ist die Arbeit von Gunnebo</li>
+        <li><a href="https://art-net.org.uk/resources/art-net-specification/">Art-Net Specification</a> - vollständige Beschreibung des Art-Net Protokolls</li>
+        <li><a href="https://github.com/margau/dmxnet">DMX Library dmxnet by margau</a> - Dokumentation der verwendeten Art-Net Bibliothek</li>
+    </ul>
+</script>
+
+<script type="text/html" data-help-name="Art-Net In">
+    <p>DMX Daten empfangen</p>
+    <p>Der Empfänger hört auf ein bestimmtes Universum und gibt die Empfangenen Daten aus.</p>
+    <p>Er muss mit einer gültigen Controller Instanz verbunden sein.</p>
+    <h3>Details</h3>
+    <h4>Net, Subnet und Universe</h4>
+    <p>Diese drei Werte stellen die komplette Universe Adresse dar. Es gibt ein theoretisches Limit von 32.768 Universen die innerhalb von
+        Art-Net addressiert werden können. Im Art-Poll können nur 255 Universen propagiert werden. Die Adressteile haben folgende Wertbereiche:
+        <ul>
+            <li>Net: <code>Eine Nummer 0-127</code></li>
+            <li>Sub-Net: <code>Eine Nummer 0-15</code></li>
+            <li>Universe: <code>Eine Nummer 0-15</code></li>
+        </ul>
+    </p>
+    <h4>Format und Übertragung</h4>
+    <p>Als Aufgabeformat kann entweder "Buckets" oder "Universe as Buffer" ausgewählt werden.
+        Im Fall "Buckets" wird abhängig vom Schalter "Nur Änderungen" ein Array mit 512 Werten bei jedem 
+        Empfang eines ArtDMX Packets oder nur die geänderten Kanäle übertragen.
+        Im Fall "Universe as Buffer" wird immer das gesamte Universum übertragen, allerdings abhängig vom
+        Schalter "Nur Änderungen" entweder bei jedem ArtDMX Packet oder nur wenn mindestens ein Wert sich geändert hat.
+    </p>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>Empfangene Daten</dd>
+        <dt>payload.buckets <span class="property-type">array</span></dt>
+        <dd>Array mit DMX Werten (im Format "Buckets")</dd>
+        <dt>payload.buffer <span class="property-type">buffer (Uint8)</span></dt>
+        <dd>Buffer mit DMX Werten aller Kanäle (im Format "Universe as Buffer")</dd>
+    </dl>
+<h4>Im Format "Buckets" werden die Kanäle in folgendem Format übertragen</h4>
+<pre>
+msg.payload = {
+    buckets: [
+        {channel: 1, value: 255},
+        {channel: 4, value: 0},
+    ]
+};
+</pre>
+    <h3>Referenzen</h3>
+    <ul>
+        <li><a href="https://art-net.org.uk/resources/art-net-specification/">Art-Net Spezifikation</a> - vollständige Beschreibung des Art-Net Protokolls</li>
+        <li><a href="https://github.com/margau/dmxnet">DMX Library dmxnet by margau</a> - Dokumentation der verwendeten Art-Net Bibliothek</li>
+        <li><a>Funktionalität und Daten</a> - Alle Funktionen und verwendeten Daten werden im <span style="background-color:Gainsboro">Art-Net Out</span>-Node beschrieben.</li>
+    </ul>
+</script>
+
+<script type="text/html" data-help-name="Art-Net Sender">
+    <p>Konfigurationsoptionen für eine Art-Net Sender Instanz.</p>
+    <p>Der Sender hält ein Universum an ArtDmx Daten und hat die komplette Funktionalität diese DMX Daten zu verändern.</p>
+    <p>Er muss mit einer gültigen Controller Instanz verbunden sein.</p>
+    <h3>Details</h3>
+    <h4>IP Adresse</h4>
+    <p>Die Adresse an die gesendet wird. Standardmäßig wird hier der <b>Limited Broadcast</b> (255.255.255.255) verwendet, 
+        aber alle Formen von Broadcast (Local oder Directed) oder jede andere gültige Unicast Adresse sind möglich. 
+        Gemäß der Art-Net Spezifikation sollte der limited broadcast nicht verwendet werden.
+        Wenn möglich soll der directed broadcast verwendet werden.</p>
+    <h4>Port</h4>
+    <p>Der Port hier ist der Port an den die Art-Net Daten gesendet werden. Im Normalfall ist dies der selbe Port wie in der Controller Instanz.</p>
+    <h4>Net, Subnet und Universe</h4>
+    <p>Diese drei Werte stellen die komplette Universe Adresse dar. Es gibt ein theoretisches Limit von 32.768 Universen die innerhalb von
+        Art-Net addressiert werden können. Im Art-Poll können nur 255 Universen propagiert werden. Die Adressteile haben folgende Wertbereiche:
+        <ul>
+            <li>Net: <code>Eine Nummer 0-127</code></li>
+            <li>Sub-Net: <code>Eine Nummer 0-15</code></li>
+            <li>Universe: <code>Eine Nummer 0-15</code></li>
+        </ul>
+    </p>
+    <h4>Refresh</h4>
+    <p>Dieser Wert ist in <b>ms</b> (default 1000). Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. 
+        Wird ein Art-Dmx Wert geändert werden die Daten sofort gesendet.
+    </p>
+    <h4>Werte sichern</h4>
+    <p>Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.</p>
+    <h3>Referenzen</h3>
+    <ul>
+        <li><a href="https://art-net.org.uk/resources/art-net-specification/">Art-Net Spezifikation</a> - vollständige Beschreibung des Art-Net Protokolls</li>
+        <li><a href="https://github.com/margau/dmxnet">DMX Library dmxnet by margau</a> - Dokumentation der verwendeten Art-Net Bibliothek</li>
+        <li><a>Funktionalität und Daten</a> - Alle Funktionen und verwendeten Daten werden im <span style="background-color:Gainsboro">Art-Net Out</span>-Node beschrieben.</li>
+    </ul>
+</script>
+
+<script type="text/html" data-help-name="Art-Net Controller">
+    <p>Konfigurationsoptionen für eine Art-Net Controller Instanz.</p>
+    <p>In der IP Liste werden alle verfügbaren Adressen des Servers gelistet.
+       <b>Achtung</b> wenn der Eintrag 0.0.0.0 verwendet wird (An alle Adressen binden). 
+       An eine Adresse kann nur ein Controller gebunden werden.</p>
+    <p>Port an dem der Controller auf emfangene Art-Net Pakete hört.
+        Der Standardwert sollte nicht geändert werden. Er kann zur Anpassung an sehr spezifische Umgebungen verwendet werden.</p>
+    <p>Mit dem OEM-Code wird der Hersteller des Controllers identifiziert. Es können sowohl der eigentliche
+       Hersteller bzw. Author der Bibliothek (margau) der Standard Hersteller (Artistic License)
+       sowie jeder andere vierstellige Hexadezimalwert verwendet werden.</p>
+    <p>Der kurze und der lange Name werden zur Identifikation des Controllers im Netwerk verwendet,
+       als Antwort auf einen Art-Poll.</p>
+    <p>Mit dem Debug Level kann die Debug Ausgabe in die Konsole eingeschaltet werden.
+       Warungen und Fehler werden zusätzlich an das Debug Fenster im Node-RED Editor gesendet.</p>
+</script>
