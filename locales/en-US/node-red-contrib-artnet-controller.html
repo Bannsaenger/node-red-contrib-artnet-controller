@@ -37,22 +37,35 @@ msg.payload = {
     ]
 };
 </pre>
-<h4>You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition' and also a 'duration' in milliseconds</h4>
+<h4>You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition' and also a 'duration' in milliseconds.
+     Optional you can specify a resolution to overwrite the default value.
+</h4>
 <pre>
 msg.payload = {
     transition: "linear",
     duration: 5000,
+    resolution: 100,
     buckets: [
         {channel: 1, value: 255},
         {channel: 4, value: 0},
     ]
 }
 </pre>
+<h4>Optional you can define start values. These will not be sent immediately. Maybe specified in the trasition payload as well.</h4>
+<pre>
+    msg.payload = {
+        start_buckets: [
+            {channel: 1, value: 255},
+            {channel: 4, value: 123},
+        ]
+    };
+</pre>
 <h4>In order to perform arc transition (movement by arc) you shold specify more details</h4>
 <pre>
 msg.payload = {
     transition: "arc",
     duration: 2000,
+    resolution: 25,
     arc: {
         pan_channel: 1,
         tilt_channel: 3,
@@ -139,7 +152,9 @@ msg.payload = {
     <h4>IP address</h4>
     <p>The address to send to. In default it is the <b>limited broadcast</b> (255.255.255.255), but can be all forms of broadcast (local or directed)
         or any other valid unicast address. Like in the Art-Net specification the limited broadcast should not be used for production environments.
-        If possible use the directed broadcast.</p>
+        If possible use the directed broadcast.
+        <b>Be careful in Windows enviroments</b> In Windows the limited broadcast will be sent only to the first network adpater. 
+        On multihomed systems the directed broadcast should be used.</p>
     <h4>Port</h4>
     <p>The Port at this point is the port where Art-Net data will be sent to. In general it is the same port as set in the controller instance.</p>
     <h4>Net, Subnet and Universe</h4>
@@ -151,9 +166,19 @@ msg.payload = {
             <li>Universe: <code>a number 0-15</code></li>
         </ul>
     </p>
+    <h4>MaxRate</h4>
+    <p>Maximum amount of ArtDMX frames to send (default 10). If values arrive in a higher frequency the spontaneous sending will be delayed.
+        Range: 0 - 50
+        With value 0 wthe spontaneous sending will be deactivated. So the transmission of ArtDMX frames will only be controlled via the value <b>Refresh</b>. 
+    </p>
     <h4>Refresh</h4>
     <p>This value is in <b>ms</b> (default 1000). After this interval the Art-Dmx data will be resend regardless of whether the data has been changed. 
         If any Art-Dmx value is changed the data will be sent immediatly.</p>
+    <h4>Resolution</h4>
+    <p>This value is in <b>ms</b> (default 100). This is the default resolution for transitions (time between the steps).
+        It can be overwritten with the payload.
+        Range: 25 - 100.000 ms
+    </p>
     <h4>Save values</h4>
     <p>When checked all DMX values are saved to context on close. So the DMX values are immediatly available after deploy.</p>
     <h3>References</h3>

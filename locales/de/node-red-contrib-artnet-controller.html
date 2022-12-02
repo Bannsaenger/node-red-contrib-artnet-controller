@@ -37,22 +37,34 @@ msg.payload = {
 };
 </pre>
 <h4>Es können auch automatische Veränderungen der Werte auf Zeit stattfinden. Entweder für einen einzelnen Kanal oder für mehrere Kanäle. 
-    Es muss dabei die 'transition' als auch die 'duration' in Millisekunden angegeben werden.</h4>
+    Es muss dabei die 'transition' als auch die 'duration' in Millisekunden angegeben werden. Optional kann hier die Auflösung (resolution)
+    angegeben werden um damit den default Wert zu überschreiben.</h4>
 <pre>
 msg.payload = {
     transition: "linear",
     duration: 5000,
+    resolution: 100,
     buckets: [
         {channel: 1, value: 255},
         {channel: 4, value: 0},
     ]
 }
 </pre>
+<h4>Optional können immer Startwerte angegeben werden. Diese werden nicht sofort gesendet. Können auch in der transition payload enthalten sein.</h4>
+<pre>
+    msg.payload = {
+        start_buckets: [
+            {channel: 1, value: 255},
+            {channel: 4, value: 123},
+        ]
+    };
+</pre>
 <h4>Für eine Bogen-Transition (movement by arc) müssen noch mehr Details angegeben werden</h4>
 <pre>
 msg.payload = {
     transition: "arc",
     duration: 2000,
+    resolution: 25,
     arc: {
         pan_channel: 1,
         tilt_channel: 3,
@@ -141,7 +153,9 @@ msg.payload = {
     <p>Die Adresse an die gesendet wird. Standardmäßig wird hier der <b>Limited Broadcast</b> (255.255.255.255) verwendet, 
         aber alle Formen von Broadcast (Local oder Directed) oder jede andere gültige Unicast Adresse sind möglich. 
         Gemäß der Art-Net Spezifikation sollte der limited broadcast nicht verwendet werden.
-        Wenn möglich soll der directed broadcast verwendet werden.</p>
+        Wenn möglich soll der Directed Broadcast verwendet werden.
+        <b>Achtung bei Windows Installationen</b>  Unter Windows wird der Limited Broadcast nur an den ersten Netzwerkadapter
+        gesendet. Bei Systemen mit mehreren Netzwerkkarten sollte am besten der Directed Broadcast verwendet werden.</p>
     <h4>Port</h4>
     <p>Der Port hier ist der Port an den die Art-Net Daten gesendet werden. Im Normalfall ist dies der selbe Port wie in der Controller Instanz.</p>
     <h4>Net, Subnet und Universe</h4>
@@ -153,9 +167,17 @@ msg.payload = {
             <li>Universe: <code>Eine Nummer 0-15</code></li>
         </ul>
     </p>
+    <h4>MaxRate</h4>
+    <p>Maximale Anzahl an ArtDMX Paketen die gesendet werden können (default 10). Werden die Werte schneller angeliefert wird die spontane Übertragung entsprechend verzögert.
+        Wertebereich: 0 - 50
+        Beim Wert 0 wird die spontane Übertragung deaktiviert, so dass die Übertragung der ArtDMX Pakete ausschließlich über den Wert <b>Refresh</b> gesteuert wird. 
+    </p>
     <h4>Refresh</h4>
-    <p>Dieser Wert ist in <b>ms</b> (default 1000). Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. 
-        Wird ein Art-Dmx Wert geändert werden die Daten sofort gesendet.
+    <p>Dieser Wert ist in <b>ms</b> (default 1000). Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht.</p>
+    <h4>Resolution</h4>
+    <p>Dieser Wert ist in <b>ms</b> (default 100). Er stellt die Standard Auflösung für Transitionen dar (Wartezeit zwischen einzelnen Schritten).
+        Er kann mit der payload überschrieben werden.
+        Wertebereich: 25 - 100.000 ms
     </p>
     <h4>Werte sichern</h4>
     <p>Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.</p>

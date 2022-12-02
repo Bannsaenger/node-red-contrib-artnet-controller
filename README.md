@@ -69,7 +69,7 @@ Or you can set multiple channels at once:
 msg.payload = {
   buckets: [
     {channel: 1, value: 255},
-    {channel: 4, value: 0},
+    {channel: 4, value: 0}
   ]
 };
 ```
@@ -80,11 +80,23 @@ You can also fade to values, either for a single channel or multiple channels. Y
 msg.payload={
     transition: "linear",
     duration: 5000,
+    resolution: 100,
     buckets: [
       {channel: 1, value: 255},
-      {channel: 4, value: 0},
+      {channel: 4, value: 0}
     ]
 }
+```
+
+Optional you can define start values. These will not be sent immediately. Maybe specified in the trasition payload as well.
+
+```
+msg.payload = {
+    start_buckets: [
+        {channel: 1, value: 255},
+        {channel: 4, value: 123},
+    ]
+};
 ```
 
 In order to perform arc transition (movement by arc) you shold specify more details:
@@ -93,6 +105,7 @@ In order to perform arc transition (movement by arc) you shold specify more deta
 msg.payload = {
     transition: "arc",
     duration: 2000,
+    resolution: 25,
     arc: {
         pan_channel: 1,
         tilt_channel: 3,

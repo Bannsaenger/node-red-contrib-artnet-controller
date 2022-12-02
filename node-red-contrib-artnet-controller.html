@@ -81,9 +81,9 @@
         defaults: {
             name: {value: ""},
             artnetcontroller: {value: "", type: "Art-Net Controller"},
-            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128))} },
-            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
-            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128) && (v == parseInt(v, 10)))} },
+            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
+            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
             outformat: {value: "buckets"},
             sendonchange: {value: true}
         },
@@ -138,15 +138,25 @@
         <input type="text" id="node-config-input-universe">
     </div>
     <div class="form-row">
+        <label for="node-config-input-maxrate"><i class="fa fa-rocket"></i> <span data-i18n="artnet.label.maxrate"></span></label>
+        <input type="text" id="node-config-input-maxrate">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-refresh"><i class="fa fa-clock-o"></i> <span data-i18n="artnet.label.refresh"></span></label>
         <input type="text" id="node-config-input-refresh">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-resolution"><i class="fa fa-clock-o"></i> <span data-i18n="artnet.label.resolution"></span></label>
+        <input type="text" id="node-config-input-resolution">
     </div>
     <div class="form-row">
         <label for="node-config-input-savevalues"><i class="fa fa-hdd-o"></i> <span data-i18n="artnet.label.savevalues"></span></label>
         <input type="checkbox" id="node-config-input-savevalues" style="display: inline-block; width: auto; vertical-align: top;">
     </div>
     <div class="form-tips" id="tip-address" hidden><span data-i18n="[html]artnet.tip.address"></span></div>
+    <div class="form-tips" id="tip-maxrate" hidden><span data-i18n="[html]artnet.tip.maxrate"></span></div>
     <div class="form-tips" id="tip-refresh" hidden><span data-i18n="[html]artnet.tip.refresh"></span></div>
+    <div class="form-tips" id="tip-resolution" hidden><span data-i18n="[html]artnet.tip.resolution"></span></div>
     <div class="form-tips" id="tip-savevalues" hidden><span data-i18n="[html]artnet.tip.savevalues"></span></div>
 </script>
 
@@ -157,11 +167,13 @@
             name: {value: ""},
             artnetcontroller: {value: "", type: "Art-Net Controller"},
             address: {value: "127.0.0.1"},
-            port: {value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536))} },
-            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128))} },
-            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
-            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16))} },
+            port: {value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536) && (v == parseInt(v, 10)))} },
+            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128) && (v == parseInt(v, 10)))} },
+            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
+            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
+            maxrate: {value: 10, validate:function(v) {return ((v >= 0) && (v <= 50) && (v == parseInt(v, 10)))}},
             refresh: {value: 1000, validate:RED.validators.number() },
+            resolution: {value: 100, validate:function(v) {return ((v >= 25) && (v <= 100000) && (v == parseInt(v, 10)))} },
             savevalues: {value: true}
         },
         label: function() {
@@ -170,8 +182,12 @@
         oneditprepare: function () {
             $('#node-config-input-address').on('focus', function () { $('#tip-address').show(); });
             $('#node-config-input-address').on('blur', function () { $('#tip-address').hide(); });
+            $('#node-config-input-maxrate').on('focus', function () { $('#tip-maxrate').show(); });
+            $('#node-config-input-maxrate').on('blur', function () { $('#tip-maxrate').hide(); });
             $('#node-config-input-refresh').on('focus', function () { $('#tip-refresh').show(); });
             $('#node-config-input-refresh').on('blur', function () { $('#tip-refresh').hide(); });
+            $('#node-config-input-resolution').on('focus', function () { $('#tip-resolution').show(); });
+            $('#node-config-input-resolution').on('blur', function () { $('#tip-resolution').hide(); });
             $('#node-config-input-savevalues').on('focus', function () { $('#tip-savevalues').show(); });
             $('#node-config-input-savevalues').on('blur', function () { $('#tip-savevalues').hide(); });
 
@@ -227,7 +243,7 @@
         defaults: {
             name: {value: ""},
             bind: { value: '', required: true },
-            port: { value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536))} },
+            port: { value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536) && (v == parseInt(v, 10)))} },
             sname: { value: 'dmxnet', validate:RED.validators.regex(/^.{0,17}$/) },
             lname: { value: 'dmxnet - OpenSource ArtNet Transceiver', validate:RED.validators.regex(/^.{0,63}$/) },
             oemcode: { value: '0x2908', validate:RED.validators.regex(/^0x\d\d\d\d$/) },
@@ -275,8 +291,12 @@
                     ]
                 }]
             });
+            $('#node-config-input-bind').on('focus', function () { $('#tip-bind').show(); });
+            $('#node-config-input-bind').on('blur', function () { $('#tip-bind').hide(); });
             $('#node-config-input-port').on('focus', function () { $('#tip-port').show(); });
             $('#node-config-input-port').on('blur', function () { $('#tip-port').hide(); });
+            $('#node-config-input-oemcode').on('focus', function () { $('#tip-oemcode').show(); });
+            $('#node-config-input-oemcode').on('blur', function () { $('#tip-oemcode').hide(); });
         },
         oneditsave: function() {
             this.bind = $('#node-config-input-bind').typedInput('value');

@@ -19,7 +19,7 @@
         "light"
     ],
     "node-red": {
-        "version": ">=3.0.0",
+        "version": ">=1.3.7",
         "nodes": {
             "artnet": "node-red-contrib-artnet-controller.js"
         }
