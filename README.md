@@ -14,6 +14,17 @@ This work is basend on the [node-red-contrib-artnet](https://github.com/gunnebo-
 
 The Art-Net library is taken from [margau/dmxnet](https://github.com/margau/dmxnet)
 
+Added the features introduced by [node-red-contrib-artnet-plus](https://github.com/haydendonald/node-red-contrib-artnet) by [Hayden Donald](https://github.com/haydendonald)
+
+## Main changes to the previous work
+
+- Basically it is fully compatible to the payload format defined by gunnebo
+- More than one universe can now be served
+- Transitions got more attributes and features
+- This module is fully functional without any additional hardware
+- The sending is completely rewritten, so that you can't flood the artnet
+- The transition engine is rewritten, so that only one interval timer with the required resolution ist doing the transition handling. **WORK IN PROGRESS**
+
 ## Install
 
 Run the following command in the root directory of your Node-RED install. Usually this is `~/.node-red`
@@ -41,12 +52,15 @@ address information. If none is found the configured **Art-Net Sender** instance
 
 ```
 msg.payload = {
-  net: 0,       // int: net in [0, 127]
-  subnet: 0,    // int: subnet in [0, 15]
-  universe: 1   // int: universe in [0, 15]
-};
+  "net": 0,
+  "subnet": 0,
+  "universe": 1
 ```
-### Receiving DMX-Data
+- `net` - int: net in [0, 127]
+- `subnet` - int: subnet in [0, 15]
+- `universe` - int: universe in [0, 15]
+
+### Receiving DMX-Data **WORK IN PROGRESS**
 
 With the **Art-Net In** node you can receive dmx values. Each **Art-Net In** node must be bound to a existing **Art-Net controller** configuration node.
 You must specify a net, subnet and universe. Then the data can be received in form of
@@ -58,43 +72,50 @@ You can either set a single channel like the following example:
 
 ```
 msg.payload = {
-  channel: 1, // int: address in [1, 512]
-  value: 255  // int: value in [0, 255]
+  "channel": 1,
+  "value": 255 
 };
 ```
+- `channel` - int: address in [1, 512]
+- `value` - int: value in [0, 255]
 
 Or you can set multiple channels at once:
 
 ```
 msg.payload = {
-  buckets: [
-    {channel: 1, value: 255},
-    {channel: 4, value: 0}
+  "buckets": [
+    {"channel": 1, "value": 255},
+    {"channel": 4, "value": 0}
   ]
 };
 ```
 
-You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition' and also a 'duration' in milliseconds:
-
-```
-msg.payload={
-    transition: "linear",
-    duration: 5000,
-    resolution: 100,
-    buckets: [
-      {channel: 1, value: 255},
-      {channel: 4, value: 0}
-    ]
-}
-```
-
-Optional you can define start values. These will not be sent immediately. Maybe specified in the trasition payload as well.
+You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optional a
+number of repetitions. The value of -1 in 'repeat', forces the the transition to run infinitely till a value or other transtion is send on this channel.
+If a repetition is defined, a gap between repetitions can be defined. The transition ends with the target value, holds and starts again with the value before the transition.
 
 ```
 msg.payload = {
-    start_buckets: [
-        {channel: 1, value: 255},
-        {channel: 4, value: 123},
+    "transition": "linear",
+    "duration": 5000,
+    "repeat": 1,
+    "gap": 1000,
+    "buckets": [
+      {"channel": 1, "value": 255},
+      {"channel": 4, "value": 0}
+    ]
+}
+```
+- `channel` - int: address in [1, 512]
+- `value` - int: value in [0, 255]
+
+Optional you can define start values. These will not be sent immediately. Can also be specified in the trasition payload as well.
+
+```
+msg.payload = {
+    "start_buckets": [
+        {"channel": 1, "value": 255},
+        {"channel": 4, "value": 123},
     ]
 };
 ```
@@ -103,18 +124,17 @@ In order to perform arc transition (movement by arc) you shold specify more deta
 
 ```
 msg.payload = {
-    transition: "arc",
-    duration: 2000,
-    resolution: 25,
-    arc: {
-        pan_channel: 1,
-        tilt_channel: 3,
-        pan_angle: 540,
-        tilt_angle: 255
+    "transition": "arc",
+    "duration": 2000,
+    "arc": {
+        "pan_channel": 1,
+        "tilt_channel": 3,
+        "pan_angle": 540,
+        "tilt_angle": 255
     },
-    start: {pan: 0, tilt: 44},
-    center: {pan: 127.5, tilt: 63.75},
-    end: {pan: 85, tilt: 44}
+    "start": {"pan": 0, "tilt": 44},
+    "center": {"pan": 127.5, "tilt": 63.75},
+    "end": {"pan": 85, "tilt": 44}
 };
 ```
 where
@@ -125,6 +145,8 @@ where
 - `end` - terminal channel's values (end point)
 
 In example above moving head will move by arc starting from {pan: 0, tilt: 44} to {pan: 85, tilt: 44}. Center point ({pan: 127.5, tilt: 63.75}) defines nominal circle center.
+
+The 'repeat' value can also be added in this transition.
 
 ## Changelog
 <!--

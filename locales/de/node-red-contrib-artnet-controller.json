@@ -15,7 +15,6 @@
             "settings": "Einstellungen",
             "maxrate": "MaxRate",
             "refresh": "Refresh",
-            "resolution": "Auflösung",
             "savevalues": "Werte sichern",
             "ignoreaddress": "Adresse ignorieren",
             "outformat": "Format",
@@ -36,8 +35,7 @@
             "oemcode": "Tipp: Standard Code ist 0x2908 (Manufacturer: margau ProductName: dmxnet), 0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub) oder jeder andere Hex Wert.",
             "address": "Adresse an die gesendet wird.<br>Tipp: Standardmäßig wird hier der <b>Limited Broadcast</b> (255.255.255.255) verwendet, aber alle Formen von Broadcast (Local oder Directed) oder jede andere gültige Unicast Adresse sind möglich.",
             "maxrate": "Maximale Anzahl an ArtDMX Paketen die gesendet werden können (default 10). Werden die Werte schneller angeliefert wird die spontane Übertragung entsprechend verzögert. (Wertebereich: 0 - 50). Beim Wert 0 wird die spontane Übertragung deaktiviert, so dass die Übertragung der ArtDMX Pakete ausschließlich über den Wert <b>Refresh</b> gesteuert wird.",
-            "refresh": "Dieser Wert ist in <b>ms</b> (default 1000).<br>Tipp: Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. Wird ein Art-Dmx Wert geändert werden die Daten sofort gesendet.",
-            "resolution": "Dieser Wert ist in <b>ms</b> (default 100).<br>Tipp: Er stellt die Standard Auflösung für Transitionen dar (Wartezeit zwischen einzelnen Schritten). Er kann mit der payload überschrieben werden. (Wertebereich: 25 - 100.000 ms)",
+            "refresh": "Dieser Wert ist in <b>ms</b> (default 1000).<br>Tipp: Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. Wird ein Art-Dmx Wert geändert werden die Daten abhängig vom Wert MaxRate sofort gesendet.<br><b>Achtung: Der Wert muss immer größer sein, als die Zeit die durch MaxRate definiert wird. Entfällt wenn MaxRate 0 ist.</b>",
             "savevalues": "Tipp: Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.",
             "ignoreaddress": "Tipp: Wenn aktiviert werden alle Adressinformationen aus dem <code>msg</code> Objekt ignoriert. Ansonsten wird versucht ein passendes Universum innerhalb des Controllers zu finden. Wird kein passendes Universum gefunden wird die Message an den konfigurierten Sender weitergeleitet."
         },

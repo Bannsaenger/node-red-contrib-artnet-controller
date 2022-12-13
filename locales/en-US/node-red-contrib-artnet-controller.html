@@ -24,57 +24,58 @@
     <h4>A single channel</h4>
 <pre>
 msg.payload = {
-    channel: 1, // int: address in [1, 512]
-    value: 255  // int: value in [0, 255]
+    "channel": 1,
+    "value": 255
 };
 </pre>
 <h4>Or you can set multiple channels at once</h4>
 <pre>
 msg.payload = {
-    buckets: [
-        {channel: 1, value: 255},
-        {channel: 4, value: 0},
+    "buckets": [
+        {"channel": 1, "value": 255},
+        {"channel": 4, "value": 0},
     ]
 };
 </pre>
-<h4>You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition' and also a 'duration' in milliseconds.
-     Optional you can specify a resolution to overwrite the default value.
+<h4>You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optional a number of repetitions. 
+    The value of -1 in 'repeat', forces the the transition to run infinitely till a value or other transtion is send on this channel.
+    If a repetition is defined, a gap between repetitions can be defined. The transition ends with the target value, holds and starts again with the value before the transition.
 </h4>
 <pre>
 msg.payload = {
-    transition: "linear",
-    duration: 5000,
-    resolution: 100,
-    buckets: [
-        {channel: 1, value: 255},
-        {channel: 4, value: 0},
+    "transition": "linear",
+    "duration": 5000,
+    "repeat": 1,
+    "gap": 1000,
+    "buckets": [
+        {"channel": 1, "value": 255},
+        {"channel": 4, "value": 0},
     ]
 }
 </pre>
-<h4>Optional you can define start values. These will not be sent immediately. Maybe specified in the trasition payload as well.</h4>
+<h4>Optional you can define start values. These will not be sent immediately. Can also be specified in the trasition payload as well.</h4>
 <pre>
     msg.payload = {
-        start_buckets: [
-            {channel: 1, value: 255},
-            {channel: 4, value: 123},
+        "start_buckets": [
+            {"channel": 1, "value": 255},
+            {"channel": 4, "value": 123},
         ]
     };
 </pre>
 <h4>In order to perform arc transition (movement by arc) you shold specify more details</h4>
 <pre>
 msg.payload = {
-    transition: "arc",
-    duration: 2000,
-    resolution: 25,
-    arc: {
-        pan_channel: 1,
-        tilt_channel: 3,
-        pan_angle: 540,
-        tilt_angle: 255
+    "transition": "arc",
+    "duration": 2000,
+    "arc": {
+        "pan_channel": 1,
+        "tilt_channel": 3,
+        "pan_angle": 540,
+        "tilt_angle": 255
     },
-    start: {pan: 0, tilt: 44},
-    center: {pan: 127.5, tilt: 63.75},
-    end: {pan: 85, tilt: 44}
+    "start": {"pan": 0, "tilt": 44},
+    "center": {"pan": 127.5, "tilt": 63.75},
+    "end": {"pan": 85, "tilt": 44}
 };
 </pre>
     <p>whereby</p>
@@ -84,7 +85,9 @@ msg.payload = {
         <li><code>center</code> - "center point" values</li>
         <li><code>end</code> - terminal channel's values (end point)</li>
     </ul>
-    <p>In example above moving head will move by arc starting from {pan: 0, tilt: 44} to {pan: 85, tilt: 44}. Center point ({pan: 127.5, tilt: 63.75}) defines nominal circle center.</p>
+    <p>In example above moving head will move by arc starting from {pan: 0, tilt: 44} to {pan: 85, tilt: 44}. Center point ({pan: 127.5, tilt: 63.75}) defines nominal circle center.
+        The 'repeat' value can also be added in this transition.
+    </p>
     <h3>Details</h3>
     <h4>Ignore Address</h4>
     <p>When checked all address information from the <code>msg</code> object will be ignored. Otherwise an attempt is made to find a matching universe inside this controller. 
@@ -173,11 +176,9 @@ msg.payload = {
     </p>
     <h4>Refresh</h4>
     <p>This value is in <b>ms</b> (default 1000). After this interval the Art-Dmx data will be resend regardless of whether the data has been changed. 
-        If any Art-Dmx value is changed the data will be sent immediatly.</p>
-    <h4>Resolution</h4>
-    <p>This value is in <b>ms</b> (default 100). This is the default resolution for transitions (time between the steps).
-        It can be overwritten with the payload.
-        Range: 25 - 100.000 ms
+        Range: 20 - 100.000 ms
+        If any Art-Dmx value is changed the data will be sent immediatly dependig of the value of MaxRate.
+        <b>Caution: This value must be higher than the time defined by MaxRate. Don't care if MaxRate is 0</b>",
     </p>
     <h4>Save values</h4>
     <p>When checked all DMX values are saved to context on close. So the DMX values are immediatly available after deploy.</p>

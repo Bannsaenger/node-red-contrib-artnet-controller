@@ -23,57 +23,59 @@
     <h4>Ein einzelner Kanal</h4>
 <pre>
 msg.payload = {
-    channel: 1, // int: address in [1, 512]
-    value: 255  // int: value in [0, 255]
+    "channel": 1,
+    "value": 255
 };
 </pre>
 <h4>Oder mehrere Kanäle gleichzeitig</h4>
 <pre>
 msg.payload = {
-    buckets: [
-        {channel: 1, value: 255},
-        {channel: 4, value: 0},
+    "buckets": [
+        {"channel": 1, "value": 255},
+        {"channel": 4, "value": 0},
     ]
 };
 </pre>
 <h4>Es können auch automatische Veränderungen der Werte auf Zeit stattfinden. Entweder für einen einzelnen Kanal oder für mehrere Kanäle. 
-    Es muss dabei die 'transition' als auch die 'duration' in Millisekunden angegeben werden. Optional kann hier die Auflösung (resolution)
-    angegeben werden um damit den default Wert zu überschreiben.</h4>
+    Es muss dabei die 'transition' als auch die 'duration' in Millisekunden und optional die Anzahl an Wiederholungen angegeben werden.
+    Der Wert -1 bei 'repeat' wird diese Transition unendlich oft wiederholt, bis sie durch einen Wert oder eine andere Transition auf diesem Kanal abgebrochen wird.
+    Wenn eine Wiederholung definiert ist, kann eine Pause (gap) zwischen der Wiederholungen definiert werden. Die Trasition endet mit dem Zielwert, pausiert und beginnt wieder mit dem Wert vor der Transition.
+</h4>
 <pre>
 msg.payload = {
-    transition: "linear",
-    duration: 5000,
-    resolution: 100,
-    buckets: [
-        {channel: 1, value: 255},
-        {channel: 4, value: 0},
+    "transition": "linear",
+    "duration": 5000,
+    "repeat": 1,
+    "gap": 1000,
+    "buckets": [
+        {"channel": 1, "value": 255},
+        {"channel": 4, "value": 0},
     ]
 }
 </pre>
-<h4>Optional können immer Startwerte angegeben werden. Diese werden nicht sofort gesendet. Können auch in der transition payload enthalten sein.</h4>
+<h4>Optional können immer Startwerte angegeben werden. Diese werden nicht sofort gesendet. Können auch in der transition payload angegeben werden.</h4>
 <pre>
     msg.payload = {
-        start_buckets: [
-            {channel: 1, value: 255},
-            {channel: 4, value: 123},
+        "start_buckets": [
+            {"channel": 1, "value": 255},
+            {"channel": 4, "value": 123},
         ]
     };
 </pre>
 <h4>Für eine Bogen-Transition (movement by arc) müssen noch mehr Details angegeben werden</h4>
 <pre>
 msg.payload = {
-    transition: "arc",
-    duration: 2000,
-    resolution: 25,
-    arc: {
-        pan_channel: 1,
-        tilt_channel: 3,
-        pan_angle: 540,
-        tilt_angle: 255
+    "transition": "arc",
+    "duration": 2000,
+    "arc": {
+        "pan_channel": 1,
+        "tilt_channel": 3,
+        "pan_angle": 540,
+        "tilt_angle": 255
     },
-    start: {pan: 0, tilt: 44},
-    center: {pan: 127.5, tilt: 63.75},
-    end: {pan: 85, tilt: 44}
+    "start": {"pan": 0, "tilt": 44},
+    "center": {"pan": 127.5, "tilt": 63.75},
+    "end": {"pan": 85, "tilt": 44}
 };
 </pre>
     <p>wobei</p>
@@ -83,7 +85,9 @@ msg.payload = {
         <li><code>center</code> - "Mittelpunkt" Werte</li>
         <li><code>end</code> - Endwerte der Kanäle (End Punkt)</li>
     </ul>
-    <p>Im obigen Beispiel startet der Moving Head bei {pan: 0, tilt: 44} hin zu {pan: 85, tilt: 44}. Mittelpunkt ({pan: 127.5, tilt: 63.75}) gibt den nominellen Kreismittelpunkt an</p>
+    <p>Im obigen Beispiel startet der Moving Head bei {pan: 0, tilt: 44} hin zu {pan: 85, tilt: 44}. Mittelpunkt ({pan: 127.5, tilt: 63.75}) gibt den nominellen Kreismittelpunkt an
+        Der Wert 'repeat' kann auf für diese Transaktion angegeben werden.
+    </p>
 
     <h3>Details</h3>
     <h4>Adresse ignorieren</h4>
@@ -173,12 +177,10 @@ msg.payload = {
         Beim Wert 0 wird die spontane Übertragung deaktiviert, so dass die Übertragung der ArtDMX Pakete ausschließlich über den Wert <b>Refresh</b> gesteuert wird. 
     </p>
     <h4>Refresh</h4>
-    <p>Dieser Wert ist in <b>ms</b> (default 1000). Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht.</p>
-    <h4>Resolution</h4>
-    <p>Dieser Wert ist in <b>ms</b> (default 100). Er stellt die Standard Auflösung für Transitionen dar (Wartezeit zwischen einzelnen Schritten).
-        Er kann mit der payload überschrieben werden.
-        Wertebereich: 25 - 100.000 ms
-    </p>
+    <p>Dieser Wert ist in <b>ms</b> (default 1000). Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht.
+        Wertebereich: 20 - 100.000 ms
+        Wird ein Art-Dmx Wert geändert werden die Daten abhängig vom Wert MaxRate sofort gesendet.
+        <b>Achtung: Der Wert muss immer größer sein, als die Zeit die durch MaxRate definiert wird. Entfällt wenn MaxRate 0 ist.</b></p>
     <h4>Werte sichern</h4>
     <p>Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.</p>
     <h3>Referenzen</h3>

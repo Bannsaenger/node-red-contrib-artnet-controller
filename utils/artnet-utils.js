@@ -13,7 +13,7 @@ ArtnetUtils.prototype = {
 	MIN_CHANNEL_VALUE: 0,
 	MAX_CHANNEL_VALUE: 255,
 	tracePoint:function (tag,point){
-		this.log(tag + " : " + parseFloat(point.x).toFixed(4) + " : " + parseFloat(point.y).toFixed(4) + " : " + parseFloat(point.z).toFixed(4));
+		this.trace(tag + " : " + parseFloat(point.x).toFixed(4) + " : " + parseFloat(point.y).toFixed(4) + " : " + parseFloat(point.z).toFixed(4));
 	},
 	roundChannelValue: function (value) {
 		return Math.min(this.MAX_CHANNEL_VALUE, Math.max(this.MIN_CHANNEL_VALUE, Math.round(value)));

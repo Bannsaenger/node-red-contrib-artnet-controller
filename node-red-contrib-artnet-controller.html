@@ -146,17 +146,12 @@
         <input type="text" id="node-config-input-refresh">
     </div>
     <div class="form-row">
-        <label for="node-config-input-resolution"><i class="fa fa-clock-o"></i> <span data-i18n="artnet.label.resolution"></span></label>
-        <input type="text" id="node-config-input-resolution">
-    </div>
-    <div class="form-row">
         <label for="node-config-input-savevalues"><i class="fa fa-hdd-o"></i> <span data-i18n="artnet.label.savevalues"></span></label>
         <input type="checkbox" id="node-config-input-savevalues" style="display: inline-block; width: auto; vertical-align: top;">
     </div>
     <div class="form-tips" id="tip-address" hidden><span data-i18n="[html]artnet.tip.address"></span></div>
     <div class="form-tips" id="tip-maxrate" hidden><span data-i18n="[html]artnet.tip.maxrate"></span></div>
     <div class="form-tips" id="tip-refresh" hidden><span data-i18n="[html]artnet.tip.refresh"></span></div>
-    <div class="form-tips" id="tip-resolution" hidden><span data-i18n="[html]artnet.tip.resolution"></span></div>
     <div class="form-tips" id="tip-savevalues" hidden><span data-i18n="[html]artnet.tip.savevalues"></span></div>
 </script>
 
@@ -167,13 +162,26 @@
             name: {value: ""},
             artnetcontroller: {value: "", type: "Art-Net Controller"},
             address: {value: "127.0.0.1"},
-            port: {value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536) && (v == parseInt(v, 10)))} },
-            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128) && (v == parseInt(v, 10)))} },
-            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
-            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))} },
-            maxrate: {value: 10, validate:function(v) {return ((v >= 0) && (v <= 50) && (v == parseInt(v, 10)))}},
-            refresh: {value: 1000, validate:RED.validators.number() },
-            resolution: {value: 100, validate:function(v) {return ((v >= 25) && (v <= 100000) && (v == parseInt(v, 10)))} },
+            port: {value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536) && (v == parseInt(v, 10)))}},
+            net: {value: 0, validate:function(v) {return ((v >= 0) && (v < 128) && (v == parseInt(v, 10)))}},
+            subnet: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))}},
+            universe: {value: 0, validate:function(v) {return ((v >= 0) && (v < 16) && (v == parseInt(v, 10)))}},
+            maxrate: {value: 10, validate:function(v) {
+                if ((v >= 0) && (v <= 50) && (v == parseInt(v, 10))) {
+                    if (v == 0) return true;
+                    var refresh = $("#node-config-input-refresh").val() || 1000;
+                    if (refresh > (1000 / v)) return true;
+                }
+                return false;
+            }},
+            refresh: {value: 1000, validate:function(v) {
+                if ((v >= 20) && (v <= 100000) && (v == parseInt(v, 10))) {
+                    var maxrate = $("#node-config-input-maxrate").val() || 10;
+                    if (maxrate == 0) return true;
+                    if (v > (1000 / maxrate)) return true;
+                }
+                return false;
+            }},
             savevalues: {value: true}
         },
         label: function() {
@@ -186,8 +194,6 @@
             $('#node-config-input-maxrate').on('blur', function () { $('#tip-maxrate').hide(); });
             $('#node-config-input-refresh').on('focus', function () { $('#tip-refresh').show(); });
             $('#node-config-input-refresh').on('blur', function () { $('#tip-refresh').hide(); });
-            $('#node-config-input-resolution').on('focus', function () { $('#tip-resolution').show(); });
-            $('#node-config-input-resolution').on('blur', function () { $('#tip-resolution').hide(); });
             $('#node-config-input-savevalues').on('focus', function () { $('#tip-savevalues').show(); });
             $('#node-config-input-savevalues').on('blur', function () { $('#tip-savevalues').hide(); });
 
