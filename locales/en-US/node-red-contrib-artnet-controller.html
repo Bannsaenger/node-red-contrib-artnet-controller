@@ -110,15 +110,15 @@ msg.payload = {
         by Art-Net. Only 255 universes can be propagated through Art-Poll. The address parts have the folloing limits:
         <ul>
             <li>Net: <code>a number 0-127</code></li>
-            <li>Sub-Net: <code>a number 0-15</code></li>
+            <li>SubNet: <code>a number 0-15</code></li>
             <li>Universe: <code>a number 0-15</code></li>
         </ul>
     </p>
     <h4>Format and forwarding</h4>
-    <p>Either "Buckets" or "Universe as Buffer" can be selected as out format. 
+    <p>Either "Buckets" or "Universe as Uint8Array" can be selected as out format. 
         In the case of "Buckets" an array with 512 values will be transmitted each time an ArtDMX packet is received, depending on the "Changes only" switch, 
         or only the changed channels. 
-        In the case of "Universe as Buffer" the entire universe is always transferred, but depending on the "Only changes" switch either with each ArtDMX packet or only if at least one value has changed.
+        In the case of "Universe as Uint8Array" the entire universe is always transferred, but depending on the "Only changes" switch either with each ArtDMX packet or only if at least one value has changed.
     </p>
     <h3>Outputs</h3>
     <dl class="message-properties">
@@ -126,8 +126,8 @@ msg.payload = {
         <dd>Received data</dd>
         <dt>payload.buckets <span class="property-type">array</span></dt>
         <dd>Array with DMX values (Format "Buckets")</dd>
-        <dt>payload.buffer <span class="property-type">buffer (Uint8)</span></dt>
-        <dd>Buffer with DMX values of all channels (Format "Universe as Buffer")</dd>
+        <dt>payload.buffer <span class="property-type">Uint8Array</span></dt>
+        <dd>Uint8Array with DMX values of all channels (Format "Universe as Uint8Array")</dd>
     </dl>
 <h4>In the case of "Buckets" all channels will be trasmitted in the following format</h4>
 <pre>
@@ -165,7 +165,7 @@ msg.payload = {
         by Art-Net. Only 255 universes can be propagated through Art-Poll. The address parts have the folloing limits:
         <ul>
             <li>Net: <code>a number 0-127</code></li>
-            <li>Sub-Net: <code>a number 0-15</code></li>
+            <li>SubNet: <code>a number 0-15</code></li>
             <li>Universe: <code>a number 0-15</code></li>
         </ul>
     </p>

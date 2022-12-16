@@ -97,7 +97,7 @@
             return controllerAddress ? ('In:' + this.net + ':' + this.subnet + ':' + this.universe + '-' + controllerAddress.bind) : 'Art-Net In';
         },
         oneditprepare: function() {
-            $('#node-input-outformat').typedInput({types:[{value: 'outformat', options: [{value: 'buckets', label: 'Buckets'},{value: 'buffer', label: 'Universe as Buffer'}]}]});
+            $('#node-input-outformat').typedInput({types:[{value: 'outformat', options: [{value: 'buckets', label: 'Buckets'},{value: 'buffer', label: 'Universe as Uint8Array'}]}]});
             $('#node-input-outformat').typedInput('value', value);
             $('#node-input-sendonchange').prop('checked', this.sendonchange);
         },

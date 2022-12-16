@@ -93,9 +93,9 @@ Utils.prototype = {
 		var R = 1;
 		var delta_phi = p2.phi - p1.phi;
 		var delta_theta = p2.theta - p1.theta;
-		var a = Math.Sin(delta_phi / 2) * Math.Sin(delta_phi / 2)
-			+ Math.Cos(p1.phi) * Math.Cos(p2.phi)
-			* Math.Sin(delta_theta / 2) * Math.Sin(delta_theta / 2);
+		var a = Math.Sin(delta_phi / 2) * Math.Sin(delta_phi / 2) +
+			Math.Cos(p1.phi) * Math.Cos(p2.phi) * 
+			Math.Sin(delta_theta / 2) * Math.Sin(delta_theta / 2);
 		var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 		var d = R * c;
 

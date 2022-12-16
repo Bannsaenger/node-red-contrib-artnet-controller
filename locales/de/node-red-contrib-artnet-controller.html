@@ -39,7 +39,7 @@ msg.payload = {
 <h4>Es können auch automatische Veränderungen der Werte auf Zeit stattfinden. Entweder für einen einzelnen Kanal oder für mehrere Kanäle. 
     Es muss dabei die 'transition' als auch die 'duration' in Millisekunden und optional die Anzahl an Wiederholungen angegeben werden.
     Der Wert -1 bei 'repeat' wird diese Transition unendlich oft wiederholt, bis sie durch einen Wert oder eine andere Transition auf diesem Kanal abgebrochen wird.
-    Wenn eine Wiederholung definiert ist, kann eine Pause (gap) zwischen der Wiederholungen definiert werden. Die Trasition endet mit dem Zielwert, pausiert und beginnt wieder mit dem Wert vor der Transition.
+    Wenn eine Wiederholung definiert ist, kann eine Pause (gap) zwischen der Wiederholungen definiert werden. Die Transition endet mit dem Zielwert, pausiert und beginnt wieder mit dem Wert vor der Transition.
 </h4>
 <pre>
 msg.payload = {
@@ -111,15 +111,15 @@ msg.payload = {
         Art-Net addressiert werden können. Im Art-Poll können nur 255 Universen propagiert werden. Die Adressteile haben folgende Wertbereiche:
         <ul>
             <li>Net: <code>Eine Nummer 0-127</code></li>
-            <li>Sub-Net: <code>Eine Nummer 0-15</code></li>
+            <li>SubNet: <code>Eine Nummer 0-15</code></li>
             <li>Universe: <code>Eine Nummer 0-15</code></li>
         </ul>
     </p>
     <h4>Format und Übertragung</h4>
-    <p>Als Aufgabeformat kann entweder "Buckets" oder "Universe as Buffer" ausgewählt werden.
+    <p>Als Aufgabeformat kann entweder "Buckets" oder "Universe as Uint8Array" ausgewählt werden.
         Im Fall "Buckets" wird abhängig vom Schalter "Nur Änderungen" ein Array mit 512 Werten bei jedem 
         Empfang eines ArtDMX Packets oder nur die geänderten Kanäle übertragen.
-        Im Fall "Universe as Buffer" wird immer das gesamte Universum übertragen, allerdings abhängig vom
+        Im Fall "Universe as Uint8Array" wird immer das gesamte Universum übertragen, allerdings abhängig vom
         Schalter "Nur Änderungen" entweder bei jedem ArtDMX Packet oder nur wenn mindestens ein Wert sich geändert hat.
     </p>
     <h3>Outputs</h3>
@@ -128,8 +128,8 @@ msg.payload = {
         <dd>Empfangene Daten</dd>
         <dt>payload.buckets <span class="property-type">array</span></dt>
         <dd>Array mit DMX Werten (im Format "Buckets")</dd>
-        <dt>payload.buffer <span class="property-type">buffer (Uint8)</span></dt>
-        <dd>Buffer mit DMX Werten aller Kanäle (im Format "Universe as Buffer")</dd>
+        <dt>payload.buffer <span class="property-type">Uint8Array</span></dt>
+        <dd>Uint8Array mit DMX Werten aller Kanäle (im Format "Universe as Uint8Array")</dd>
     </dl>
 <h4>Im Format "Buckets" werden die Kanäle in folgendem Format übertragen</h4>
 <pre>
@@ -167,7 +167,7 @@ msg.payload = {
         Art-Net addressiert werden können. Im Art-Poll können nur 255 Universen propagiert werden. Die Adressteile haben folgende Wertbereiche:
         <ul>
             <li>Net: <code>Eine Nummer 0-127</code></li>
-            <li>Sub-Net: <code>Eine Nummer 0-15</code></li>
+            <li>SubNet: <code>Eine Nummer 0-15</code></li>
             <li>Universe: <code>Eine Nummer 0-15</code></li>
         </ul>
     </p>

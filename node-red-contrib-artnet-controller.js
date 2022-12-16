@@ -10,6 +10,9 @@ const DEFAULT_MOVING_HEAD_CONFIG = {
     tilt_angle: 255
 };
 
+// compare two arrays, especially two received universes of dmx data
+const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 module.exports = function (RED) {
 
     /*************************************************
@@ -121,8 +124,6 @@ module.exports = function (RED) {
         this.instSending = false;           // set to true if spontaneous sending is active when maxRate > 0
         this.sendActive = false;            // true while sending of dmxdata has to be delayed
 
-        const self = this;
-
         // calculate required resolution (intervaltime of main worker, senderClock)
         this.senderClock = 100;             // default 10 per second
         if (this.maxrate == 0) {
@@ -135,6 +136,7 @@ module.exports = function (RED) {
         /**
          * create sender instance
          */
+        this.log(`[ArtNetSender] Creating sender on controller: ${this.controllerObj.name} parameters: IP: ${this.address}:${this.port}, SubNetUni: ${this.net}:${this.subnet}:${this.universe}, refresh interval: ${this.refresh} ms`);
         this.sender = this.controllerObj.dmxnet.newSender({
             ip: this.address,
             port: this.port,
@@ -186,12 +188,21 @@ module.exports = function (RED) {
                 if (currentTransaction.currentStep <= currentTransaction.stepsToGo) {       // proceed next step
                     switch (currentTransaction.type) {
                         case 'linear': 
-                            this.trace(`[mainWorker] doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, value: ${currentTransaction.steps[currentTransaction.currentStep].value}`);
+                            this.trace(`[mainWorker] (linear) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, value: ${currentTransaction.steps[currentTransaction.currentStep].value}`);
                             this.set(currentChannel, currentTransaction.steps[currentTransaction.currentStep].value);
                             this.dataDirty = true;
                             break;
 
                         case 'arc':
+                            // get point in spherical coordinates
+                            var iterationPoint = utils.getIterationPoint(currentTransaction.steps[currentTransaction.currentStep].value, currentTransaction.radius, currentTransaction.backVector, currentTransaction.movement_point);
+                            var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.theta, currentTransaction.arcConfig.tilt_angle));
+                            var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.phi, currentTransaction.arcConfig.pan_angle));
+
+                            this.debug(`[mainWorker] (arc) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, sphericalP -> r: ${parseFloat(iterationPoint.r).toFixed(4)}, theta: ${parseFloat(iterationPoint.theta).toFixed(4)}, phi: ${parseFloat(iterationPoint.phi).toFixed(4)}, T: ${parseFloat(currentTransaction.steps[currentTransaction.currentStep].value).toFixed(4)}, pan: ${parseFloat(pan).toFixed(4)}, tilt: ${parseFloat(tilt).toFixed(4)}`);
+                            this.set(currentTransaction.arcConfig.pan_channel, pan);
+                            this.set(currentTransaction.arcConfig.tilt_channel, tilt);
+                            this.dataDirty = true;
                             break;
 
                         default:
@@ -214,7 +225,9 @@ module.exports = function (RED) {
                                 currentTransaction.currentRepetition++;
                                 currentTransaction.currentGapStep = 0;
                                 currentTransaction.currentStep = 1;
-                                this.set(currentChannel, currentTransaction.startValue);
+                                if (currentTransaction.startValue) this.set(currentChannel, currentTransaction.startValue);
+                                if (currentTransaction.startPanValue) this.set(currentTransaction.arcConfig.pan_channel, currentTransaction.startPanValue);
+                                if (currentTransaction.startTiltValue) this.set(currentTransaction.arcConfig.tilt_channel, currentTransaction.startTiltValue);
                                 this.dataDirty = true;
                             }
                         } else {
@@ -227,7 +240,7 @@ module.exports = function (RED) {
                     }
                 }
             }
-            // now take care for sending
+            // now take care of sending
             if (this.dataDirty) {
                 this.dataDirty = false;
                 this.sendActive = true;      // for security reasons
@@ -294,7 +307,7 @@ module.exports = function (RED) {
         this.sendData = function () {
             if (this.maxrate == 0) return;  // when spontaneous sending is disabled
 
-            if (this.sendActive) {           // only set dirty and no direct transmission
+            if (this.sendActive) {          // only set dirty and no direct transmission
                 this.dataDirty = true;
                 this.trace(`[sendData] Only setting dataDirty to true`);
             } else {                        // first call with direct transmission
@@ -376,7 +389,13 @@ module.exports = function (RED) {
                 this.log(`[clearTransition] Clear transition: ${this.cleanStringify(transition)}, skipDataSending: ${skipDataSending}`);
                 // set end value immediately
                 if (transition.targetValue) {
-                    this.set(transition.targetValue);
+                    this.set(channel, transition.targetValue);
+                }
+                if (transition.targetPanValue) {
+                    this.set(transition.arcConfig.pan_channel, transition.targetPanValue);
+                }
+                if (transition.targetTiltValue) {
+                    this.set(transition.arcConfig.tilt_channel, transition.targetTiltValue);
                 }
                 // skip data sending if we have start_buckets in payload
                 if (!skipDataSending) {
@@ -426,7 +445,7 @@ module.exports = function (RED) {
          * the input function. Called by the ArtNet-In node
          * @param {any} msg the message object routed to this node
          */
-         this.input = function(msg) { 
+        this.input = function(msg) { 
             var payload = msg.payload;
             var transition = payload.transition;
             var duration = parseInt(payload.duration || 0);
@@ -464,14 +483,14 @@ module.exports = function (RED) {
                     }
 
                     //add transition without target value
-                    this.addTransition(arcConfig.tilt_channel, "arc");
+                    //this.addTransition(arcConfig.tilt_channel, "arc"); only one transition on pan_channel
                     this.addTransition(arcConfig.pan_channel, "arc");
-
                     this.moveToPointOnArc(cv_theta, cv_phi,
                         payload.end.tilt, payload.end.pan,
                         payload.center.tilt, payload.center.pan,
                         duration, interval, arcConfig, 
                         payload.repeat, payload.gap);
+
                 } catch (e) {
                     this.error("[input] ERROR " + e.message);
                 }
@@ -507,7 +526,6 @@ module.exports = function (RED) {
                 }
             }
         };
-        //});
 
         /**
          * Add the steps for a linear transition to the transitionsMap and start the transition
@@ -537,6 +555,7 @@ module.exports = function (RED) {
             var direction = (new_value > oldValue);
             var value_per_step = diff / steps;
             var time_per_step = transition_time / steps;
+            var valueStep = direction === true ? value_per_step : -value_per_step;
 
             // set basic values for this transition
             transition.targetValue = new_value;
@@ -546,7 +565,6 @@ module.exports = function (RED) {
             transition.timeToGo = time_per_step * steps;
 
             for (var i = 1; i <= steps; i++) {
-                var valueStep = direction === true ? value_per_step : -value_per_step;
                 var iterationValue = oldValue + i * valueStep;
                 this.trace(`iterationValue: ${iterationValue}`);
                 // create step
@@ -564,11 +582,22 @@ module.exports = function (RED) {
         };
 
         /**
-         * to be Überarbeited
+         * Add the steps for a arc transition to the transitionsMap and start the transition
          */
         this.moveToPointOnArc = function (_cv_theta, _cv_phi, _tilt_nv, _pan_nv, _tilt_center, _pan_center, transition_time, interval, arcConfig, repeat = 0, gap = 0) {
-            const self = this;
-            try {
+            var steps = transition_time / this.senderClock;
+            var time_per_step = this.senderClock;
+            var gapSteps = Math.ceil(gap / this.senderClock);
+            var transition = this.transitionsMap[arcConfig.pan_channel];
+            var oldPanValue = this.get(arcConfig.pan_channel);
+            var oldTiltValue = this.get(arcConfig.tilt_channel);
+
+            if (!transition) {
+                this.warn(`called with arcConfig: ${JSON.stringify(arcConfig)}. No transition(s) in progress !!`);
+                return;    
+            }
+            this.trace(`[moveToPointOnArc] called with arcConfig: ${JSON.stringify(arcConfig)}, interval: ${interval}, transition_time: ${transition_time}, repeat: ${repeat}, gapSteps`);
+
             // current value
             var cv_theta = artnetutils.channelValueToRad(_cv_theta, arcConfig.tilt_angle); //tilt
             var cv_phi = artnetutils.channelValueToRad(_cv_phi, arcConfig.pan_angle); // pan
@@ -644,6 +673,7 @@ module.exports = function (RED) {
 
             var radius = utils.getDistanceBetweenPointsInCartesian(currentPoint, centerPoint);
             var radius2 = utils.getDistanceBetweenPointsInCartesian(newPoint, centerPoint);
+            this.debug(`[moveToPointOnArc] radius: ${radius}, radius2: ${radius2}, Epsilon: ${utils.EPSILON}, diff: ${Math.abs(radius2 - radius)}`);
             if (Math.abs(radius2 - radius) > utils.EPSILON) {
                 this.error("[moveToPointOnArc] Invalid center point");
                 return;
@@ -659,8 +689,6 @@ module.exports = function (RED) {
             var actualAngle = newT - currentT;
             var angleDelta = Math.abs(actualAngle) <= Math.PI ? actualAngle : -(actualAngle - Math.PI);
 
-            var steps = transition_time / this.senderClock;
-            var time_per_step = this.senderClock;
             var angleStep = angleDelta / steps;
             // limit steps for interval
             var startStep = parseInt(steps * interval.start);
@@ -668,57 +696,38 @@ module.exports = function (RED) {
             this.debug(`[moveToPointOnArc] angleStep: ${angleDelta}, ${angleStep}, ${utils.radiansToDegrees(angleDelta)}`);
             this.debug(`[moveToPointOnArc] angleStep: ${steps}, ${startStep}, ${endStep}`);
 
-            var timeoutID;
-            var counter = 0;
+            // set basic values for this transition
+            if (endStep == 1) {
+                transition.targetPanValue = artnetutils.validateChannelValue(artnetutils.radToChannelValue(nv_phi, arcConfig.pan_angle));
+                transition.targetTiltValue = artnetutils.validateChannelValue(artnetutils.radToChannelValue(nv_phi, arcConfig.tilt_angle));
+            }
+            transition.repeat = repeat;
+            transition.gapSteps = gapSteps;
+            transition.startPanValue = oldPanValue;
+            transition.startTiltValue = oldTiltValue;
+            transition.timeToGo = time_per_step * (endStep - startStep);
+            transition.radius = radius;
+            transition.backVector = backVector;
+            transition.movement_point = movement_point;
+            transition.arcConfig = arcConfig;
+
+            var counter = 1;
 
             for (var i = startStep; i <= endStep; i++) {
                 var t = currentT + i * angleStep;
-                timeoutID = setTimeout(function (t) {
-                    self.log(`im timer t: ${self.cleanStringify(t)}`);
-                    // get point in spherical coordinates
-                    var iterationPoint = utils.getIterationPoint(t, radius, backVector, movement_point);
-                    var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.theta, arcConfig.tilt_angle));
-                    var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.phi, arcConfig.pan_angle));
-
-                    self.debug("[moveToPointOnArc] sphericalP     ", "r: ", parseFloat(iterationPoint.r).toFixed(4), "theta:", parseFloat(iterationPoint.theta).toFixed(4), "phi:", parseFloat(iterationPoint.phi).toFixed(4), "\n",
-                        "T:             ", parseFloat(t).toFixed(4), "\n",
-                        "TILT: ", tilt, "pan: ", pan);
-                    self.debug("[moveToPointOnArc] **********************");
-
-                    self.set(arcConfig.tilt_channel, tilt);
-                    self.set(arcConfig.pan_channel, pan);
-                    self.sendData();
-                }, counter * time_per_step, t);
+                // create step
+                transition.steps[counter] = {
+                    'value' : t,
+                    'time' : i * time_per_step,
+                    'step' : i
+                };
+                transition.stepsToGo = counter;
                 counter++;
-                //this.addTransitionTimeout(arcConfig.pan_channel, timeoutID);
-                //this.addTransitionTimeout(arcConfig.tilt_channel, timeoutID);
             }
 
-            if (endStep == 1) {
-                var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(nv_theta, arcConfig.tilt_angle));
-                var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(nv_phi, arcConfig.pan_angle));
-
-                timeoutID = setTimeout(function () {
-                    self.set(arcConfig.tilt_channel, tilt);
-                    self.set(arcConfig.pan_channel, pan);
-                    self.sendData();
-                    //delete self.closeCallbacksMap[arcConfig.tilt_channel];
-                    //delete self.closeCallbacksMap[arcConfig.pan_channel];
-                }, transition_time);
-
-                //this.addTransitionTimeout(arcConfig.pan_channel, timeoutID);
-                //this.addTransitionTimeout(arcConfig.tilt_channel, timeoutID);
-
-                // add close callback to set channels to new_value in case redeploy and all timeouts stopping
-                /*
-                this.closeCallbacksMap[arcConfig.pan_channel] = this.closeCallbacksMap[arcConfig.tilt_channel] = (function () {
-                    this.set(arcConfig.tilt_channel, tilt);
-                    this.set(arcConfig.pan_channel, pan);
-                });*/
-            }
-            } catch(err) {
-                this.error(err);
-            }
+            // start transition
+            this.sendData();
+            this.trace(`[moveToPointOnArc] Maps after fadeToValue: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
         };
 
         /**
@@ -823,6 +832,59 @@ module.exports = function (RED) {
      */
     function ArtNetInNode(config) {
         RED.nodes.createNode(this, config);
+        this.name             = config.name       || '';
+        this.artnetcontroller = config.artnetcontroller;
+        this.net              = config.net        || 0;
+        this.subnet           = config.subnet     || 0;
+        this.universe         = config.universe   || 0;
+        this.outformat        = config.outformat  || 'buckets';
+        this.sendonchange     = typeof config.sendonchange === 'undefined' ? true : config.sendonchange;
+
+        this.controllerObj = RED.nodes.getNode(this.artnetcontroller);
+        this.dmxData = [];
+
+        /**
+         * create receiver instance
+         */
+        this.log(`[ArtNetSender] Creating receiver on controller: ${this.controllerObj.name} parameters: SubNetUni: ${this.net}:${this.subnet}:${this.universe}, format: ${this.outformat}, ${this.sendonchange ? 'send data only when dmx data changes' : 'send on every art-dmx packet'}`);
+        this.receiver = this.controllerObj.dmxnet.newReceiver({
+            net: this.net,
+            subnet: this.subnet,
+            universe: this.universe,
+        });
+
+        // Dump data if DMX Data is received
+        this.receiver.on('data', function(data) {
+            //console.log('DMX data:', data); // eslint-disable-line no-console
+            var msg = {};
+            var buckets = [];
+            var i = 0;
+            if (!this.sendonchange || !equals(this.dmxData, data)) {    // sendonchange = false OR data changed
+                if (!this.sendonchange) {                               // send in any case
+                    if (this.outformat == 'buckets') {
+                        for (i = 0; i < data.length; i++) {
+                            buckets.push({'channel': i + 1, 'value': data[i]});
+                        }
+                        msg = {'payload': {'buckets': buckets}};
+                    } else {
+                        msg = {'payload': data};
+                    }
+                } else {                                                // send only changes
+                    if (this.outformat == 'buckets') {
+                        for (i = 0; i < data.length; i++) {
+                            if (this.dmxData[i] != data[i]) {           // only if this single value changed
+                                buckets.push({'channel': i + 1, 'value': data[i]});
+                            }
+                        }
+                        msg = {'payload': {'buckets': buckets}};
+                    } else {
+                        msg = {'payload': data};
+                    }
+                }
+                this.send(msg);
+            }
+            this.dmxData = data;            // save the actual universe for comparison
+        }.bind(this));
     }
     RED.nodes.registerType("Art-Net In", ArtNetInNode);
 

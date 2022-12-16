@@ -6,7 +6,7 @@ function ArtnetUtils() {
 		if (this.IS_DEBUG) {
 			console.log.apply(console,arguments);
 		}
-	}
+	};
 }
 
 ArtnetUtils.prototype = {

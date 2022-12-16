@@ -60,11 +60,11 @@ msg.payload = {
 - `subnet` - int: subnet in [0, 15]
 - `universe` - int: universe in [0, 15]
 
-### Receiving DMX-Data **WORK IN PROGRESS**
+### Receiving DMX-Data
 
 With the **Art-Net In** node you can receive dmx values. Each **Art-Net In** node must be bound to a existing **Art-Net controller** configuration node.
 You must specify a net, subnet and universe. Then the data can be received in form of
-buckets as decribed in **Payload format** later in this document or as a buffer (buffer (Uint8)) with the values of the whole universe.  
+buckets as decribed in **Payload format** later in this document or as a Uint8Array with the values of the whole universe.  
 
 ### Payload format
 
@@ -148,12 +148,16 @@ In example above moving head will move by arc starting from {pan: 0, tilt: 44} t
 
 The 'repeat' value can also be added in this transition.
 
+## Attention using the arc feature
+This "arc" feature behaves exact like the original module. But the description does not meet the reality. The start, center and end points are not realy channel values.
+Must be revised.
+
 ## Changelog
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.0.1
 * (Bannsaenger) initial release
 
 ## License
