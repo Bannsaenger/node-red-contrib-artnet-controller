@@ -1,5 +1,8 @@
 [![NPM version](https://img.shields.io/npm/v/@bannsaenger/node-red-contrib-artnet-controller.svg)](https://www.npmjs.com/package/@bannsaenger/node-red-contrib-artnet-controller) [![Downloads](https://img.shields.io/npm/dm/@bannsaenger/node-red-contrib-artnet-controller)](https://www.npmjs.com/package/@bannsaenger/node-red-contrib-artnet-controller)
 
+[![NPM](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller.png?downloads=true)](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller/)
+
+# @bannsaenger/node-red-contrib-artnet-controller
 Node-RED nodes that controls lights via artnet.
 
 **This is a complete solution for sending and receiving dmx-data via Art-Net without the need of additional hardware**
