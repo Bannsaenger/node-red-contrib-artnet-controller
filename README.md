@@ -1,8 +1,5 @@
 [![NPM version](https://img.shields.io/npm/v/@bannsaenger/node-red-contrib-artnet-controller.svg)](https://www.npmjs.com/package/@bannsaenger/node-red-contrib-artnet-controller) [![Downloads](https://img.shields.io/npm/dm/@bannsaenger/node-red-contrib-artnet-controller)](https://www.npmjs.com/package/@bannsaenger/node-red-contrib-artnet-controller)
 
-[![NPM](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller.png?downloads=true)](https://nodei.co/npm/@bannsaenger/node-red-contrib-artnet-controller/)
-
-# @bannsaenger/node-red-contrib-artnet-controller
 Node-RED nodes that controls lights via artnet.
 
 **This is a complete solution for sending and receiving dmx-data via Art-Net without the need of additional hardware**
@@ -23,7 +20,7 @@ Added the features introduced by [node-red-contrib-artnet-plus](https://github.c
 - Transitions got more attributes and features
 - This module is fully functional without any additional hardware
 - The sending is completely rewritten, so that you can't flood the artnet
-- The transition engine is rewritten, so that only one interval timer with the required resolution ist doing the transition handling. **WORK IN PROGRESS**
+- The transition engine is rewritten, so that only one interval timer with the required resolution ist doing the transition handling.
 
 ## Install
 
