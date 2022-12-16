@@ -1,35 +1,43 @@
 {
-    "name": "@bannsaenger/node-red-contrib-artnet-controller",
-    "version": "0.0.1",
-    "description": "Node-RED node that controls lights via Art-Net. Acts as a Art-Net controller.",
-    "dependencies": {
-        "dmxnet": "https://github.com/Bannsaenger/dmxnet"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/Bannsaenger/node-red-contrib-artnet-controller"
-    },
-    "license": "MIT",
-    "keywords": [
-        "node-red",
-        "artnet",
-        "art-net",
-        "dmx",
-        "dmxnet",
-        "light"
-    ],
-    "node-red": {
-        "version": ">=1.3.7",
-        "nodes": {
-            "artnet": "node-red-contrib-artnet-controller.js"
-        }
-    },
-    "engines": {
-        "node": ">=14.0.0"
-    },
-    "author": {
-        "name": "Bannsaenger",
-        "email": "bannsaenger@gmx.de"
-    },
-    "homepage": "https://github.com/Bannsaenger/node-red-contrib-artnet-controller"
+  "name": "@bannsaenger/node-red-contrib-artnet-controller",
+  "version": "0.0.1",
+  "description": "Node-RED node that controls lights via Art-Net. Acts as a Art-Net controller.",
+  "dependencies": {
+    "dmxnet": "git+https://github.com/Bannsaenger/dmxnet.git"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bannsaenger/node-red-contrib-artnet-controller.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node-red",
+    "artnet",
+    "art-net",
+    "dmx",
+    "dmxnet",
+    "light"
+  ],
+  "node-red": {
+    "version": ">=1.3.7",
+    "nodes": {
+      "artnet": "node-red-contrib-artnet-controller.js"
+    }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "Bannsaenger <bannsaenger@gmx.de>",
+  "homepage": "https://github.com/Bannsaenger/node-red-contrib-artnet-controller",
+  "bugs": {
+    "url": "https://github.com/Bannsaenger/node-red-contrib-artnet-controller/issues"
+  },
+  "main": "node-red-contrib-artnet-controller.js",
+  "directories": {
+    "example": "examples"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
 }
