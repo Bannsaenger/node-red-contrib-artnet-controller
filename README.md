@@ -159,6 +159,9 @@ Must be revised.
 * (Bannsaenger) fixed some TypedInput issues
 * (Bannsaenger) added ESTA type code to the "Art-Net Controller" and clarified OEM-code descriptions. OEM-code does not include the manufacturer code.
 
+### 0.1.1
+* (Bannsaenger) fix help for esta homepage
+
 ## License
 MIT License
 
