@@ -26,6 +26,7 @@ module.exports = function (RED) {
         this.sname    = config.sname    || 'dmxnet';
         this.lname    = config.lname    || 'dmxnet - OpenSource ArtNet Transceiver';
         this.oemcode  = config.oemcode  || '0x2908';
+        this.estacode = config.estacode || '0x0000';
         this.loglevel = config.loglevel || 'warn';
 
         this.senders = {};
@@ -36,6 +37,7 @@ module.exports = function (RED) {
         this.dmxnet = new dmxlib.dmxnet({
             hosts: this.bind === '0.0.0.0' ? undefined : [this.bind],
             oem: this.oemcode,
+            esta: this.estacode,
             sName: this.sname,
             lName: this.lname,
             log: {

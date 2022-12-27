@@ -11,6 +11,7 @@
             "sname": "Short Name",
             "lname": "Name",
             "oemcode": "OEM-Code",
+            "estacode": "ESTA-Code",
             "debug": "Level",
             "settings": "Settings",
             "maxrate": "MaxRate",
@@ -32,7 +33,8 @@
         "tip": {
             "bind": "Tip: Only one Port can be bound to one ip address. Please notice when selecting '0.0.0.0'.",
             "port": "Tip: Default Port is 6454. Can be in the Range 0 - 65535",
-            "oemcode": "Tip: Default Code is 0x2908 (Manufacturer: margau ProductName: dmxnet), 0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub) or any Hex value.",
+            "oemcode": "Tip: Default Code is 0x2908 (Manufacturer: margau ProductName: dmxnet), 0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub) or any other Hex value.",
+            "estacode": "Tip: Default Code is 0x0000 (Manufacturer: ESTA), 0x414C (Manufacturer: Artistic Licence Engineering Ltd.) or any other Hex value.",
             "address": "Address to send to.<br>Tip: By default this is the <b>limited broadcast</b> (255.255.255.255) but can be all forms of broadcast (local or directed) or any other valid unicast address",
             "maxrate": "Maximum amount of ArtDMX frames to send (default 10). If values arrive in a higher frequency the spontaneous sending will be delayed. Range: 0 - 50. With value 0 wthe spontaneous sending will be deactivated. So the transmission of ArtDMX frames will only be controlled via the value <b>Refresh</b>.",
             "refresh": "This value is in <b>ms</b> (default 1000).<br>Tip: After this interval the Art-Dmx data will be resend regardless of whether the data has been changed. If any Art-Dmx value is changed the data will be sent immediatly dependig of the value of MaxRate. <br><b>Caution: This value must be higher than the time defined by MaxRate. Don't care if MaxRate is 0</b>",

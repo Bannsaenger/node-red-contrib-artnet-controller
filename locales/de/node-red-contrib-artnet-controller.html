@@ -193,14 +193,23 @@ msg.payload = {
 
 <script type="text/html" data-help-name="Art-Net Controller">
     <p>Konfigurationsoptionen für eine Art-Net Controller Instanz.</p>
+    <h3>Details</h3>
+    <h4>IP Adresse</h4>
     <p>In der IP Liste werden alle verfügbaren Adressen des Servers gelistet.
        <b>Achtung</b> wenn der Eintrag 0.0.0.0 verwendet wird (An alle Adressen binden). 
        An eine Adresse kann nur ein Controller gebunden werden.</p>
+    <h4>Port</h4>
     <p>Port an dem der Controller auf emfangene Art-Net Pakete hört.
         Der Standardwert sollte nicht geändert werden. Er kann zur Anpassung an sehr spezifische Umgebungen verwendet werden.</p>
-    <p>Mit dem OEM-Code wird der Hersteller des Controllers identifiziert. Es können sowohl der eigentliche
+    <h4>OEM-Code</h4>
+    <p>Mit dem OEM-Code wird der Hersteller bzw. der Produkttyp des Controllers identifiziert. Es können sowohl der eigentliche
        Hersteller bzw. Author der Bibliothek (margau) der Standard Hersteller (Artistic License)
        sowie jeder andere vierstellige Hexadezimalwert verwendet werden.</p>
+    <h4>ESTA-Code</h4>
+    <p>Mit dem ESTA-Code wird der eigentliche Hersteller des Controllers identifiziert. Dieser Herstellercode ist im Standard die 0x0000 (ESTA).
+       Es kann hier jeder vierstellige Hexadezimalwert verwendet werden. Die registrieren Codes der Hersteller können auf der 
+       <a href="https://art-net.org.uk/resources/art-net-specification/">ESTA Homepage</a> eingesehen werden.</p>
+    <h4>Kurz- und Langname</h4>
     <p>Der kurze und der lange Name werden zur Identifikation des Controllers im Netwerk verwendet,
        als Antwort auf einen Art-Poll.</p>
     <p>Mit dem Debug Level kann die Debug Ausgabe in die Konsole eingeschaltet werden.

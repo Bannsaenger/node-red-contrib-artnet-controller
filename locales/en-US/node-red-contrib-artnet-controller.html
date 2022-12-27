@@ -199,11 +199,15 @@ msg.payload = {
        Only one controller can be bound to a IP address.</p>
     <h4>Port</h4>
     <p>The listening Port for receiving Art-Net packets. 
-        The default value should not be changed but can be adjusted to a specific environment.</p>
+       The default value should not be changed but can be adjusted to a specific environment.</p>
     <h4>OEM-Code</h4>
-    <p>The OEM-Code identifies the manufacturer of the Controllers. You can choose the original
-        manufacturer eg. author of the module (margau) the default manufacturer (Artistic License)
-        as well as every four digit hex value.</p>
+    <p>The OEM-Code identifies the manufacturer e.g. the type of product of the controller. You can choose the original
+       manufacturer eg. author of the module (margau) the default manufacturer (Artistic License)
+       as well as every four digit hex value.</p>
+    <h4>ESTA-Code</h4>
+    <p>The ESTA-Code identifies the actual manufacturer of the controller. This code is in default 0x0000 (ESTA).
+       Every four digit hex value can be used. The registered manufacturers con be found on the 
+       <a href="https://art-net.org.uk/resources/art-net-specification/">ESTA Homepage</a>.</p>
     <h4>Short and long name</h4>
     <p>Choose a short an a long name which are published by the controller as identification via Art-Poll</p>
     <h4>Debug level</h4>

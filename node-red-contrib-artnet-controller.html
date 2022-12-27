@@ -223,6 +223,10 @@
         <input type="text" id="node-config-input-oemcode">
     </div>
     <div class="form-row">
+        <label for="node-config-input-estacode"><i class="fa fa-certificate"></i> <span data-i18n="artnet.label.estacode"></span></label>
+        <input type="text" id="node-config-input-estacode">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-sname"><i class="fa fa-tag"></i> <span data-i18n="artnet.label.sname"></span></label>
         <input type="text" id="node-config-input-sname">
     </div>
@@ -241,6 +245,7 @@
     <div class="form-tips" id="tip-bind"><span data-i18n="artnet.tip.bind"></span></div>
     <div class="form-tips" id="tip-port" hidden><span data-i18n="artnet.tip.port"></span></div>
     <div class="form-tips" id="tip-oemcode"><span data-i18n="artnet.tip.oemcode"></span></div>
+    <div class="form-tips" id="tip-estacode"><span data-i18n="artnet.tip.estacode"></span></div>
 </script>
 
 <script type="text/javascript">
@@ -252,7 +257,8 @@
             port: { value: 6454, validate:function(v) {return ((v >= 0) && (v < 65536) && (v == parseInt(v, 10)))} },
             sname: { value: 'dmxnet', validate:RED.validators.regex(/^.{0,17}$/) },
             lname: { value: 'dmxnet - OpenSource ArtNet Transceiver', validate:RED.validators.regex(/^.{0,63}$/) },
-            oemcode: { value: '0x2908', validate:RED.validators.regex(/^0x\d\d\d\d$/) },
+            oemcode: { value: '0x2908', validate:RED.validators.regex(/^0x[0-9A-Fa-f]{4}$/) },
+            estacode: { value: '0x0000', validate:RED.validators.regex(/^0x[0-9A-Fa-f]{4}$/) },
             loglevel: { value: 'warn' }
         },
         label: function() {
@@ -275,15 +281,41 @@
                 $('#node-config-input-bind').typedInput({types:[{value: 'bind', options: []}]});
             }
 
+            // OEM Codes
+            var oemItems = [
+                    {value: '0x0000', label: '0x0000 (ProductName: Dmx-Hub, Manufacturer: Artistic Licence Engineering Ltd)', hasValue: false},
+                    {value: '0x2908', label: '0x2908 (ProductName: dmxnet, Manufacturer: margau)', hasValue: false},
+                    {value: 'custom', label: 'custom', icon:'red/images/typedInput/target.svg', validate: /^0x[0-9A-Fa-f]{4}$/}
+                ];
+            var oemType = "custom";
+            for (var i in oemItems) {
+                if (this.oemcode == oemItems[i].value) {
+                    oemType = this.oemcode;
+                }
+            }
             $('#node-config-input-oemcode').typedInput({
-                default: this.oemcode,
-                types: [
-                    {value: '0x0000', label: '0x0000 (Manufacturer: Artistic Licence Engineering Ltd ProductName: Dmx-Hub)', hasValue: false},
-                    {value: '0x2908', label: '0x2908 (Manufacturer: margau ProductName: dmxnet)', hasValue: false},
-                    {value: 'other', label: 'other', icon:'red/images/typedInput/target.svg', validate: /^0x\d\d\d\d$/}
-                ]
+                default: oemType,
+                types: oemItems
             });
 
+            // ESTA Codes
+            var estaItems = [
+                    {value: '0x0000', label: '0x0000 (Manufacturer: ESTA/PLASA)', hasValue: false},
+                    {value: '0x414C', label: '0x414C (Manufacturer: Artistic Licence Engineering Ltd.)', hasValue: false},
+                    {value: 'custom', label: 'custom', icon:'red/images/typedInput/target.svg', validate: /^0x[0-9A-Fa-f]{4}$/}
+                ];
+            var estaType = "custom";
+            for (var i in estaItems) {
+                if (this.estacode == estaItems[i].value) {
+                    estaType = this.estacode;
+                }
+            }
+            $('#node-config-input-estacode').typedInput({
+                default: estaType,
+                types: estaItems
+            });
+
+            // Loglevel
             $('#node-config-input-loglevel').typedInput({
                 types: [{
                     value: 'loglevel',
@@ -303,16 +335,26 @@
             $('#node-config-input-port').on('blur', function () { $('#tip-port').hide(); });
             $('#node-config-input-oemcode').on('focus', function () { $('#tip-oemcode').show(); });
             $('#node-config-input-oemcode').on('blur', function () { $('#tip-oemcode').hide(); });
+            $('#node-config-input-estacode').on('focus', function () { $('#tip-oemcode').show(); });
+            $('#node-config-input-estacode').on('blur', function () { $('#tip-oemcode').hide(); });
         },
         oneditsave: function() {
-            this.bind = $('#node-config-input-bind').typedInput('value');
 
             var myOemType = $('#node-config-input-oemcode').typedInput('type');
-            if (myOemType !== 'other') {
+            if (myOemType == 'custom') {
+                // shape the value to upper case hex digits
+                $('#node-config-input-oemcode').typedInput('value', '0x' + $('#node-config-input-oemcode').typedInput('value').toString().substring(2).toUpperCase());
+            } else {
                 $('#node-config-input-oemcode').typedInput('value', myOemType);
             }
-            this.oemcode = $('#node-config-input-oemcode').typedInput('value');
-            this.loglevel = $('#node-config-input-loglevel').typedInput('value');
+
+            var myEstaType = $('#node-config-input-estacode').typedInput('type');
+            if (myEstaType == 'custom') {
+                // shape the value to upper case hex digits
+                $('#node-config-input-estacode').typedInput('value', '0x' + $('#node-config-input-estacode').typedInput('value').toString().substring(2).toUpperCase());
+            } else {
+                $('#node-config-input-estacode').typedInput('value', myEstaType);
+            }
         }
     });
 </script>
