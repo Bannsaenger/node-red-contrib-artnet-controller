@@ -1,1 +1,5 @@
 /logo.png
+.devel
+.vscode
+.jshintrc
+.eslintrc.json
