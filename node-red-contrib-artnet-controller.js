@@ -132,13 +132,13 @@ module.exports = function (RED) {
             this.senderClock = this.refresh;
             this.instSending = false;
         } else {
-            this.senderClock = Math.round((1000 / this.maxrate) < this.refresh ? (1000 / this.maxrate) : this.refresh);
+            this.senderClock = Math.round((1000 / this.maxrate) < this.refresh ? Math.round((1000 / this.maxrate)) : this.refresh);
             this.instSending = true;
         }
         /**
          * create sender instance
          */
-        this.log(`[ArtNetSender] Creating sender on controller: ${this.controllerObj.name} parameters: IP: ${this.address}:${this.port}, SubNetUni: ${this.net}:${this.subnet}:${this.universe}, refresh interval: ${this.refresh} ms`);
+        this.log(`[ArtNetSender] Creating sender on controller: ${this.controllerObj.name} parameters: IP: ${this.address}:${this.port}, SubNetUni: ${this.net}:${this.subnet}:${this.universe}, refresh interval: ${this.refresh} ms, sender clock: ${this.senderClock} ms`);
         this.sender = this.controllerObj.dmxnet.newSender({
             ip: this.address,
             port: this.port,
@@ -212,7 +212,7 @@ module.exports = function (RED) {
                     }
                     if (currentTransaction.currentStep == currentTransaction.stepsToGo) {
                         // only at the end of the transition
-                        this.debug(`[mainWorker] difference between target and actual time : ${currentTime - currentTransaction.startTime - currentTransaction.timeToGo} ms (positive = took too long, negative = to fast)\n (${this.cleanStringify(currentTransaction)})`);
+                        this.debug(`[mainWorker] difference between target and actual time : ${currentTime - currentTransaction.startTime - currentTransaction.timeToGo} ms, ${(((currentTime - currentTransaction.startTime - currentTransaction.timeToGo) * 100) / currentTransaction.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`);
                     }
                     currentTransaction.currentStep++;
                 } else {                                                                    // check if transition is to repeat
@@ -307,7 +307,13 @@ module.exports = function (RED) {
          * immediatly send out the dmx buffer or delay sending
          */
         this.sendData = function () {
-            if (this.maxrate == 0) return;  // when spontaneous sending is disabled
+            if (this.maxrate == 0) {        // when spontaneous sending is disabled
+                if (!this.sendActive) {     // start mainWorker if no active sending detected
+                    this.sendActive = true;
+                    this.mainWorker.refresh();
+                }
+                return;
+            }
 
             if (this.sendActive) {          // only set dirty and no direct transmission
                 this.dataDirty = true;
@@ -376,7 +382,6 @@ module.exports = function (RED) {
             }
             // reset maps
             this.transitionsMap = {};
-//            this.closeCallbacksMap = {};
         };
 
         /**
@@ -388,7 +393,7 @@ module.exports = function (RED) {
             var transition = this.transitionsMap[channel];
 
             if (transition) {
-                this.log(`[clearTransition] Clear transition: ${this.cleanStringify(transition)}, skipDataSending: ${skipDataSending}`);
+                this.log(`[clearTransition] Clear transition of channel: ${channel}, skipDataSending: ${skipDataSending}`);
                 // set end value immediately
                 if (transition.targetValue) {
                     this.set(channel, transition.targetValue);
@@ -547,12 +552,10 @@ module.exports = function (RED) {
                 return;    
             }
 
-            this.trace(`[fadeToValue] called with channel: ${channel}, new_value: ${new_value}, transition_time: ${transition_time}, starting from value: ${oldValue}, repeat: ${repeat}, gapSteps`);
+            this.trace(`[fadeToValue] called with channel: ${channel}, new_value: ${new_value}, transition_time: ${transition_time}, starting from value: ${oldValue}, repeat: ${repeat}, gapSteps: ${gap}`);
             // calculate difference between new and old values
             var diff = Math.abs(oldValue - new_value);
-            if (diff / steps <= 1) {
-                steps = diff;
-            }
+
             // should we fade up or down?
             var direction = (new_value > oldValue);
             var value_per_step = diff / steps;
@@ -568,7 +571,7 @@ module.exports = function (RED) {
 
             for (var i = 1; i <= steps; i++) {
                 var iterationValue = oldValue + i * valueStep;
-                this.trace(`iterationValue: ${iterationValue}`);
+                this.trace(`iterationValue: ${iterationValue} in step: ${i}`);
                 // create step
                 transition.steps[i] = {
                     'value' : Math.round(iterationValue),
@@ -848,7 +851,7 @@ module.exports = function (RED) {
         /**
          * create receiver instance
          */
-        this.log(`[ArtNetSender] Creating receiver on controller: ${this.controllerObj.name} parameters: SubNetUni: ${this.net}:${this.subnet}:${this.universe}, format: ${this.outformat}, ${this.sendonchange ? 'send data only when dmx data changes' : 'send on every art-dmx packet'}`);
+        this.log(`[ArtNetInNode] Creating receiver on controller: ${this.controllerObj.name} parameters: SubNetUni: ${this.net}:${this.subnet}:${this.universe}, format: ${this.outformat}, ${this.sendonchange ? 'send data only when dmx data changes' : 'send on every art-dmx packet'}`);
         this.receiver = this.controllerObj.dmxnet.newReceiver({
             net: this.net,
             subnet: this.subnet,

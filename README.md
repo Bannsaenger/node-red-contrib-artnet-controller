@@ -162,6 +162,10 @@ Must be revised.
 ### 0.1.1
 * (Bannsaenger) fix help for esta homepage
 
+### 0.1.2
+* (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
+* (Bannsaenger) fix start transition even if maxRate = 0
+
 ## License
 MIT License
 
