@@ -152,19 +152,19 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### 0.0.1
-* (Bannsaenger) initial release
+### 0.1.2
+* (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
+* (Bannsaenger) fix start transition even if maxRate = 0
+
+### 0.1.1
+* (Bannsaenger) fix help for esta homepage
 
 ### 0.1.0
 * (Bannsaenger) fixed some TypedInput issues
 * (Bannsaenger) added ESTA type code to the "Art-Net Controller" and clarified OEM-code descriptions. OEM-code does not include the manufacturer code.
 
-### 0.1.1
-* (Bannsaenger) fix help for esta homepage
-
-### 0.1.2
-* (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
-* (Bannsaenger) fix start transition even if maxRate = 0
+### 0.0.1
+* (Bannsaenger) initial release
 
 ## License
 MIT License
