@@ -152,6 +152,9 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.1.3
+* (Bannsaenger) go back the original dmxnet dependecy
+
 ### 0.1.2
 * (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
 * (Bannsaenger) fix start transition even if maxRate = 0

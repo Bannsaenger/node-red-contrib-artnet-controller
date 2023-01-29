@@ -1,9 +1,9 @@
 {
   "name": "@bannsaenger/node-red-contrib-artnet-controller",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Node-RED node that controls lights via Art-Net. Acts as a Art-Net controller.",
   "dependencies": {
-    "dmxnet": "git+https://github.com/Bannsaenger/dmxnet.git"
+    "dmxnet": ">=0.9.0"
   },
   "repository": {
     "type": "git",
