@@ -22,7 +22,7 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         this.name     = config.name     || '';
         this.bind     = config.bind     || '0.0.0.0';
-        this.port     = config.port     || 6454;
+        this.port     = parseInt(config.port) || 6454;
         this.sname    = config.sname    || 'dmxnet';
         this.lname    = config.lname    || 'dmxnet - OpenSource ArtNet Transceiver';
         this.oemcode  = config.oemcode  || '0x2908';
@@ -36,13 +36,17 @@ module.exports = function (RED) {
          */
         this.dmxnet = new dmxlib.dmxnet({
             hosts: this.bind === '0.0.0.0' ? undefined : [this.bind],
+            listen: this.port,
             oem: this.oemcode,
             esta: this.estacode,
             sName: this.sname,
             lName: this.lname,
             log: {
                 level: this.loglevel
-            }
+            },
+            errFunc: function(err) {
+                this.error(`Art-Net Controller (dmxlib) error: ${err.message}, stack: ${err.stack}`);
+            }.bind(this)
         });
 
         /**
@@ -95,7 +99,7 @@ module.exports = function (RED) {
         /**
          * is called whenn node is unloaded
          */
-         this.on('close', function() {
+        this.on('close', function() {
             // put this into the dmxnet lib 
             this.dmxnet.listener4.close();
             delete this.dmxnet;
@@ -747,7 +751,7 @@ module.exports = function (RED) {
         /**
          * called when node is destroyed
          */
-         this.on('close', function() {
+        this.on('close', function() {
             clearTimeout(this.mainWorker);
             this.clearTransitions();
             this.saveDataToContext();

@@ -152,6 +152,10 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.1.4
+* (Bannsaenger) added user defined error handler for dmxnet library. Works with dmxnet > 0.9.0. With versions prior to 0.9.0 the behaviour is like before
+* (Bannsaenger) fixed the transfer of parameter port number to the dmxnet library
+
 ### 0.1.3
 * (Bannsaenger) go back the original dmxnet dependecy
 
