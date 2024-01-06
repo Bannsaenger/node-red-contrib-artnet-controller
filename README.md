@@ -18,28 +18,28 @@ Added the features introduced by [node-red-contrib-artnet-plus](https://github.c
 - Transitions got more attributes and features
 - This module is fully functional without any additional hardware
 - The sending is completely rewritten, so that you can't flood the artnet
-- The transition engine is rewritten, so that only one interval timer with the required resolution ist doing the transition handling.
+- The transition engine is rewritten, so that only one interval timer with the required resolution is doing the transition handling.
 
 ## Install
 
-Run the following command in the root directory of your Node-RED install. Usually this is `~/.node-red`
+Run the following command in the root directory of your Node-RED installation. Usually this is `~/.node-red`
 ```
 npm install @bannsaenger/node-red-contrib-artnet-controller
 ```
-Or even inside of Node-RED with the palette manager.
+Or even from inside Node-RED with the palette manager.
 
 ## Using
 
 ### Sending DMX-Data
 
 First you must specify a **Art-Net controller** configuration node. The controller is bound to one or all 
-ip addresses found on the system and handles the Art-Net polling and shows up as an Art-Net node in the network.
+IP addresses found on the system and handles the Art-Net polling and shows up as an Art-Net node in the network.
 
 For sending data there must be a **Art-Net Sender** configuration node. This node holds one universe of dmx-data
-and hadles the sending of this universe to the network.
+and handles the sending of this universe to the network.
 
-To get dmx-data out to the network you use the **Art-Net Out** node. This is basically connected to
-a **Art-Net Sender** node. If you mass am msg object without additional addressing, the dmx values
+To get dmx-data out to the network, use the **Art-Net Out** node. This is basically connected to
+an **Art-Net Sender** node. If you pass a msg object without additional addressing, the dmx values
 are sent to the **Art-Net Sender** specified in the **Art-Net Out** node.
 
 If you pass additional addressing information, the **Art-Net Out** node tries to find a sender with the given
@@ -58,8 +58,8 @@ msg.payload = {
 ### Receiving DMX-Data
 
 With the **Art-Net In** node you can receive dmx values. Each **Art-Net In** node must be bound to a existing **Art-Net controller** configuration node.
-You must specify a net, subnet and universe. Then the data can be received in form of
-buckets as decribed in **Payload format** later in this document or as a Uint8Array with the values of the whole universe.  
+
+You must specify a net, subnet and universe. Then the data can be received in form of buckets as described in **Payload format** later in this document or as a Uint8Array with the values of the whole universe.  
 
 ### Payload format
 
@@ -85,9 +85,13 @@ msg.payload = {
 };
 ```
 
-You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optional a
-number of repetitions. The value of -1 in 'repeat', forces the the transition to run infinitely till a value or other transtion is send on this channel.
-If a repetition is defined, a gap between repetitions can be defined. The transition ends with the target value, holds and starts again with the value before the transition.
+You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optionally a number of repetitions.
+
+The value of -1 for 'repeat' forces the the transition to run infinitely until a value or other transition is sent to this channel.
+
+If repetition is defined, then a gap between repetitions can also be defined.
+
+The transition ends with the target value, holds and starts again with the value before the transition.
 
 ```
 msg.payload = {
@@ -104,7 +108,7 @@ msg.payload = {
 - `channel` - int: address in [1, 512]
 - `value` - int: value in [0, 255]
 
-Optional you can define start values. These will not be sent immediately. Can also be specified in the trasition payload as well.
+Optionally you can define start values. These will not be sent immediately. They can also be specified in the transition payload as well.
 
 ```
 msg.payload = {
@@ -115,7 +119,7 @@ msg.payload = {
 };
 ```
 
-In order to perform arc transition (movement by arc) you shold specify more details:
+In order to perform an arc transition (movement by arc) you must specify more details:
 
 ```
 msg.payload = {
@@ -134,17 +138,18 @@ msg.payload = {
 ```
 where
 
-- `arc` - channels that should be involved in arc transition (pan and tilt channels)
-- `start` - initial channel's values (start point). By default: current channel's values.
+- `arc` - channels that should be involved in the arc transition (pan and tilt channels)
+- `start` - channel's initial values (start point), by default, current channel's values
 - `center` - "center point" values
-- `end` - terminal channel's values (end point)
+- `end` - channel's final values (end point)
 
-In example above moving head will move by arc starting from {pan: 0, tilt: 44} to {pan: 85, tilt: 44}. Center point ({pan: 127.5, tilt: 63.75}) defines nominal circle center.
+In the example above, the moving head will move by arc starting from {pan: 0, tilt: 44} to {pan: 85, tilt: 44}. Center point ({pan: 127.5, tilt: 63.75}) defines nominal circle center.
 
 The 'repeat' value can also be added in this transition.
 
 ## Attention using the arc feature
-This "arc" feature behaves exact like the original module. But the description does not meet the reality. The start, center and end points are not realy channel values.
+This "arc" feature behaves exact like the original module. But the description does not meet reality. The start, center and end points are not realy channel values.
+
 Must be revised.
 
 ## Changelog
@@ -157,7 +162,7 @@ Must be revised.
 * (Bannsaenger) fixed the transfer of parameter port number to the dmxnet library
 
 ### 0.1.3
-* (Bannsaenger) go back the original dmxnet dependecy
+* (Bannsaenger) go back the original dmxnet dependency
 
 ### 0.1.2
 * (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
