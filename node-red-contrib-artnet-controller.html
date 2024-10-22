@@ -169,14 +169,14 @@
             maxrate: {value: 10, validate:function(v) {
                 if ((v >= 0) && (v <= 50) && (v == parseInt(v, 10))) {
                     if (v == 0) return true;
-                    var refresh = $("#node-config-input-refresh").val() || 1000;
+                    var refresh = $("#node-config-input-refresh").val() || this.refresh;
                     if (refresh > (1000 / v)) return true;
                 }
                 return false;
             }},
             refresh: {value: 1000, validate:function(v) {
                 if ((v >= 20) && (v <= 100000) && (v == parseInt(v, 10))) {
-                    var maxrate = $("#node-config-input-maxrate").val() || 10;
+                    var maxrate = $("#node-config-input-maxrate").val() || this.maxrate;
                     if (maxrate == 0) return true;
                     if (v > (1000 / maxrate)) return true;
                 }
