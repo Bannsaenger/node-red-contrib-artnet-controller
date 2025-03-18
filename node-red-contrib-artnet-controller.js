@@ -581,7 +581,7 @@ module.exports = function (RED) {
             // should we fade up or down?
             var timePerStep = duration / stepCount;
 
-            // set basic values for this transition q
+            // set basic values for this transition
             transition.targetValue = newValue;
             transition.repeat = repeat;
             transition.gapSteps = gapSteps;
