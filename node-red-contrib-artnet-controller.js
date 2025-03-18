@@ -458,68 +458,20 @@ module.exports = function (RED) {
          */
         this.input = function(msg) { 
             var payload = msg.payload;
-            var transition = payload.transition;
+            var transition = payload.transition || '';
             var duration = parseInt(payload.duration || 0);
             var i = 0;
 
             this.debug(`[input] received input to sender, payload: ${JSON.stringify(payload)} `);
 
-            // processing start_buckets
-            if (payload.start_buckets && Array.isArray(payload.start_buckets)) {
-                this.debug(`[input] processing start_buckets`);
-                for (i = 0; i < payload.start_buckets.length; i++) {
-                    this.clearTransition(payload.start_buckets[i].channel, true);
-                    // skip data sending to device
-                    this.set(payload.start_buckets[i].channel, payload.start_buckets[i].value);
-                }
-                this.sendData();
+            // expand buckets if array exists
+            if (payload.buckets && Array.isArray(payload.buckets)) {
+                this.debug(`[input] expanding buckets`);
+                payload.buckets = this.expandBuckets(payload.buckets);
             }
-
-            // processing transitions
-            if (transition === "arc") {
-                try {
-                    if (!payload.end || !payload.center) {
-                        this.error(`[input] Invalid payload for transition "arc"`);
-                    }
-
-                    var arcConfig = payload.arc || DEFAULT_MOVING_HEAD_CONFIG;
-
-                    var cv_phi = payload.start.pan;
-                    var cv_theta = payload.start.tilt;
-
-                    var interval = {start: 0, end: 1};
-                    if (Array.isArray(payload.interval) && payload.interval.length > 1) {
-                        interval.start = payload.interval[0];
-                        interval.end = payload.interval[1];
-                    }
-
-                    //add transition without target value
-                    //this.addTransition(arcConfig.tilt_channel, "arc"); only one transition on pan_channel
-                    this.addTransition(arcConfig.pan_channel, "arc");
-                    this.moveToPointOnArc(cv_theta, cv_phi,
-                        payload.end.tilt, payload.end.pan,
-                        payload.center.tilt, payload.center.pan,
-                        duration, interval, arcConfig, 
-                        payload.repeat, payload.gap);
-
-                } catch (e) {
-                    this.error("[input] ERROR " + e.message);
-                }
-            } else if (transition === "linear") {
-                if (payload.channel) {
-                    this.debug(`[input] add a transition "linear" for single value`);
-                    this.addTransition(payload.channel, "linear");
-                    this.fadeToValue(payload.channel, payload.value, duration, payload.repeat);
-                } else if (Array.isArray(payload.buckets)) {
-                    this.debug(`[input] add transitions "linear" for some buckets`);
-                    for (i = 0; i < payload.buckets.length; i++) {
-                        this.addTransition(payload.buckets[i].channel, "linear");
-                        this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, payload.repeat, payload.gap);
-                    }
-                } else {
-                    this.error(`[input] Invalid payload. No channel, no buckets in transition "linear"`);
-                }
-            } else {    // no transition
+    
+            // no transition, only channel processing
+            if (transition === '') {
                 if (payload.channel) {
                     this.debug(`[input] now sending single value`);
                     this.clearTransition(payload.channel, true);
@@ -535,6 +487,68 @@ module.exports = function (RED) {
                 } else {
                     this.error(`[input] Invalid payload. No channel, no buckets`);
                 }
+            } else {
+                // processing transitions
+
+                // processing start_buckets (only valid in transitions)
+                if (payload.start_buckets && Array.isArray(payload.start_buckets)) {
+                    this.debug(`[input] processing start_buckets`);
+                    payload.start_buckets = this.expandBuckets(payload.start_buckets);
+                    for (i = 0; i < payload.start_buckets.length; i++) {
+                        this.clearTransition(payload.start_buckets[i].channel, true);
+                        // skip data sending to device
+                        this.set(payload.start_buckets[i].channel, payload.start_buckets[i].value);
+                    }
+                    this.sendData();
+                }
+
+                // transition: arc (as done by gunnebo)
+                if (transition === "arc") {
+                    try {
+                        if (!payload.end || !payload.center) {
+                            this.error(`[input] Invalid payload for transition "arc"`);
+                        }
+
+                        var arcConfig = payload.arc || DEFAULT_MOVING_HEAD_CONFIG;
+
+                        var cv_phi = payload.start.pan;
+                        var cv_theta = payload.start.tilt;
+
+                        var interval = {start: 0, end: 1};
+                        if (Array.isArray(payload.interval) && payload.interval.length > 1) {
+                            interval.start = payload.interval[0];
+                            interval.end = payload.interval[1];
+                        }
+
+                        //add transition without target value
+                        //this.addTransition(arcConfig.tilt_channel, "arc"); only one transition on pan_channel
+                        this.addTransition(arcConfig.pan_channel, "arc");
+                        this.moveToPointOnArc(cv_theta, cv_phi,
+                            payload.end.tilt, payload.end.pan,
+                            payload.center.tilt, payload.center.pan,
+                            duration, interval, arcConfig, 
+                            payload.repeat, payload.gap);
+
+                    } catch (e) {
+                        this.error("[input] ERROR " + e.message);
+                    }
+                } else if (transition === "linear") {
+                    if (payload.channel) {
+                        this.debug(`[input] add a transition "linear" for single value`);
+                        this.addTransition(payload.channel, "linear");
+                        this.fadeToValue(payload.channel, payload.value, duration, payload.repeat);
+                    } else if (Array.isArray(payload.buckets)) {
+                        this.debug(`[input] add transitions "linear" for some buckets`);
+                        for (i = 0; i < payload.buckets.length; i++) {
+                            this.addTransition(payload.buckets[i].channel, "linear");
+                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, payload.repeat, payload.gap, payload.hold, payload.mirror);
+                        }
+                    } else {
+                        this.error(`[input] Invalid payload. No channel, no buckets in transition "linear"`);
+                    }
+                } else {    // unknown transition
+                    this.error(`[input] Invalid payload. Unknown transition: "${transition}"`);
+                }
             }
         };
 
@@ -545,11 +559,14 @@ module.exports = function (RED) {
          * @param {number} transition_time Total time the transition should take
          * @param {number} repeat (optional) Number of repetitions to do
          * @param {number} gap (optional) Value in ms to wait between repetitions 
+         * @param {number} hold (optional) Value in ms to hold the new_value
+         * @param {boolean} mirror (optional) Mirror the transition after the hold time (e.g. fade up and down)
          */
-        this.fadeToValue = function (channel, new_value, transition_time, repeat = 0, gap = 0) {
+        this.fadeToValue = function (channel, new_value, transition_time, repeat = 0, gap = 0, hold = 0, mirror = false) {
             var oldValue = this.get(channel);
             var steps = Math.ceil(transition_time / this.senderClock);
             var gapSteps = Math.ceil(gap / this.senderClock);
+            var holdSteps = Math.ceil(hold / this.senderClock);
             var transition = this.transitionsMap[channel];
             if (!transition) {
                 this.warn(`[fadeToValue] called with channel: ${channel}. No transition in progress !!`);
@@ -572,6 +589,8 @@ module.exports = function (RED) {
             transition.gapSteps = gapSteps;
             transition.startValue = oldValue;
             transition.timeToGo = time_per_step * steps;
+            transition.holdSteps = holdSteps;
+            transition.mirror = mirror;
 
             for (var i = 1; i <= steps; i++) {
                 var iterationValue = oldValue + i * valueStep;
@@ -744,9 +763,50 @@ module.exports = function (RED) {
          * @param {*} tag 
          * @param {*} point 
          */
-        this.tracePoint = function (tag,point){
+        this.tracePoint = function (tag,point) {
             this.trace(tag + " : " + parseFloat(point.x).toFixed(4) + " : " + parseFloat(point.y).toFixed(4) + " : " + parseFloat(point.z).toFixed(4));
         };
+
+        /**
+         * Expand the buckets if fillUntil is given
+         * @param {Array} buckets The buckets structure to expand
+         * @returns Array
+         */
+        this.expandBuckets = function(buckets) {
+            var expBuckets = [];    // expanded buckets
+            var tmpBuckets = [];    // temporary array
+            
+            for (var bucket of buckets) {
+                tmpBuckets = [];
+                if (bucket.hasOwnProperty("fillUntil")) {
+                    if (bucket.fillUntil < bucket.channel || bucket.fillUntil > 512) {
+                        node.error("fillUntil is to big or less than channel");;
+                    }
+                    for (var fill = bucket.channel; fill <= bucket.fillUntil; fill++) {
+                        tmpBuckets.push({"channel": fill, "value:": bucket.value});
+                    }
+                }
+                else {
+                    tmpBuckets.push({ "channel": bucket.channel, "value:": bucket.value });
+                }
+                // Merge the two arrays
+                expBuckets = arrayMerge(expBuckets, tmpBuckets, 'channel');
+            }
+
+            return expBuckets.sort((a,b) => a.channel - b.channel); // return the expanded and sorted bucket array
+        }
+
+        /**
+         * merge the given arrays, replace existing values and add non existing values
+         * @param {Array} a The first array to merge
+         * @param {Array} b The second array to merge
+         * @param {string} prop Property of the key to compare
+         * @returns {Array}
+         */
+        function arrayMerge(a, b, prop) {
+            var reduced = a.filter(aitem => !b.find(bitem => aitem[prop] === bitem[prop]))
+            return reduced.concat(b);
+        }
 
         /**
          * called when node is destroyed
