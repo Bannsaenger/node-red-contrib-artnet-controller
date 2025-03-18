@@ -544,7 +544,7 @@ module.exports = function (RED) {
                         this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
                             this.addTransition(payload.buckets[i].channel, transition);
-                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, payload.repeat, payload.gap);
+                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, payload.repeat, payload.gap, payload.hold, payload.mirror);
                         }
                     } else {
                         this.error(`[input] Invalid payload. No channel, no buckets in transition "${transition}"`);
@@ -565,7 +565,7 @@ module.exports = function (RED) {
          * @param {number} hold (optional) Value in ms to hold the new_value
          * @param {boolean} mirror (optional) Mirror the transition after the hold time (e.g. fade up and down)
          */
-        this.fadeToValue = function (channel, newValue, duration, transitionType, repeat = 0, gap = 0) {
+        this.fadeToValue = function (channel, newValue, duration, transitionType, repeat = 0, gap = 0, hold = 0, mirror = false) {
             var oldValue = this.get(channel);
             var stepCount = Math.ceil(duration / this.senderClock);
             var gapSteps = Math.ceil(gap / this.senderClock);
