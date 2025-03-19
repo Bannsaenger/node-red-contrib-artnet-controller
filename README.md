@@ -105,6 +105,7 @@ msg.payload = {
     ]
 }
 ```
+- `transition` - string: linear, gamma or quadratic
 - `channel` - int: address in [1, 512]
 - `value` - int: value in [0, 255]
 
