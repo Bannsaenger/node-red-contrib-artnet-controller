@@ -1,5 +1,6 @@
 const dmxlib = require('dmxnet');
 const utils = require('./utils/arc-transition-utils');
+const transitions = require('./transitioncurves/transitioncurves')
 const artnetutils = require('./utils/artnet-utils');
 const { networkInterfaces } = require('os');
 
@@ -193,8 +194,10 @@ module.exports = function (RED) {
                 if (currentTransaction.currentStep == 1) currentTransaction.startTime = currentTime;
                 if (currentTransaction.currentStep <= currentTransaction.stepsToGo) {       // proceed next step
                     switch (currentTransaction.type) {
+                        case 'quadratic':
+                        case 'gamma':
                         case 'linear': 
-                            this.trace(`[mainWorker] (linear) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, value: ${currentTransaction.steps[currentTransaction.currentStep].value}`);
+                            this.trace(`[mainWorker] (${currentTransaction.type}) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, value: ${currentTransaction.steps[currentTransaction.currentStep].value}`);
                             this.set(currentChannel, currentTransaction.steps[currentTransaction.currentStep].value);
                             this.dataDirty = true;
                             break;
@@ -532,19 +535,19 @@ module.exports = function (RED) {
                     } catch (e) {
                         this.error("[input] ERROR " + e.message);
                     }
-                } else if (transition === "linear") {
+                } else if (["linear", "quadratic", "gamma"].includes(transition)) {
                     if (payload.channel) {
-                        this.debug(`[input] add a transition "linear" for single value`);
-                        this.addTransition(payload.channel, "linear");
-                        this.fadeToValue(payload.channel, payload.value, duration, payload.repeat);
+                        this.debug(`[input] add a transition "${transition}" for single value`);
+                        this.addTransition(payload.channel, transition);
+                        this.fadeToValue(payload.channel, payload.value, duration, transition, payload.repeat);
                     } else if (Array.isArray(payload.buckets)) {
-                        this.debug(`[input] add transitions "linear" for some buckets`);
+                        this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
-                            this.addTransition(payload.buckets[i].channel, "linear");
-                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, payload.repeat, payload.gap, payload.hold, payload.mirror);
+                            this.addTransition(payload.buckets[i].channel, transition);
+                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, payload.repeat, payload.gap, payload.hold, payload.mirror);
                         }
                     } else {
-                        this.error(`[input] Invalid payload. No channel, no buckets in transition "linear"`);
+                        this.error(`[input] Invalid payload. No channel, no buckets in transition "${transition}"`);
                     }
                 } else {    // unknown transition
                     this.error(`[input] Invalid payload. Unknown transition: "${transition}"`);
@@ -553,18 +556,18 @@ module.exports = function (RED) {
         };
 
         /**
-         * Add the steps for a linear transition to the transitionsMap and start the transition
+         * Add the steps for a non-arc transition to the transitionsMap and start the transition
          * @param {number} channel Channel on which this trnsition is done
          * @param {number} new_value Value to go to
-         * @param {number} transition_time Total time the transition should take
+         * @param {number} duration Total time the transition should take
          * @param {number} repeat (optional) Number of repetitions to do
          * @param {number} gap (optional) Value in ms to wait between repetitions 
          * @param {number} hold (optional) Value in ms to hold the new_value
          * @param {boolean} mirror (optional) Mirror the transition after the hold time (e.g. fade up and down)
          */
-        this.fadeToValue = function (channel, new_value, transition_time, repeat = 0, gap = 0, hold = 0, mirror = false) {
+        this.fadeToValue = function (channel, newValue, duration, transitionType, repeat = 0, gap = 0, hold = 0, mirror = false) {
             var oldValue = this.get(channel);
-            var steps = Math.ceil(transition_time / this.senderClock);
+            var stepCount = Math.ceil(duration / this.senderClock);
             var gapSteps = Math.ceil(gap / this.senderClock);
             var holdSteps = Math.ceil(hold / this.senderClock);
             var transition = this.transitionsMap[channel];
@@ -573,36 +576,23 @@ module.exports = function (RED) {
                 return;    
             }
 
-            this.trace(`[fadeToValue] called with channel: ${channel}, new_value: ${new_value}, transition_time: ${transition_time}, starting from value: ${oldValue}, repeat: ${repeat}, gapSteps: ${gap}`);
-            // calculate difference between new and old values
-            var diff = Math.abs(oldValue - new_value);
+            this.trace(`[fadeToValue] called with channel: ${channel}, newValue: ${newValue}, duration: ${duration}, starting from value: ${oldValue}, repeat: ${repeat}, gapSteps: ${gap}`);
 
             // should we fade up or down?
-            var direction = (new_value > oldValue);
-            var value_per_step = diff / steps;
-            var time_per_step = transition_time / steps;
-            var valueStep = direction === true ? value_per_step : -value_per_step;
+            var timePerStep = duration / stepCount;
 
             // set basic values for this transition
-            transition.targetValue = new_value;
+            transition.targetValue = newValue;
             transition.repeat = repeat;
             transition.gapSteps = gapSteps;
             transition.startValue = oldValue;
-            transition.timeToGo = time_per_step * steps;
             transition.holdSteps = holdSteps;
             transition.mirror = mirror;
+            transition.timeToGo = timePerStep * stepCount;
 
-            for (var i = 1; i <= steps; i++) {
-                var iterationValue = oldValue + i * valueStep;
-                this.trace(`iterationValue: ${iterationValue} in step: ${i}`);
-                // create step
-                transition.steps[i] = {
-                    'value' : Math.round(iterationValue),
-                    'time' : i * time_per_step,
-                    'step' : i
-                };
-                transition.stepsToGo = i;
-            }
+            transition.steps = transitions.TransitionFactory(transitionType).computeValues(duration, stepCount, oldValue, newValue)
+
+            transition.stepsToGo = stepCount;
 
             // start transition
             this.sendData();
