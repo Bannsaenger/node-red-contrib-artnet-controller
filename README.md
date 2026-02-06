@@ -85,6 +85,13 @@ msg.payload = {
 };
 ```
 
+Also by setting the payload to an array of numbers or a `UInt8Array` for consistency with **Art-Net In**. Values will be assigned consecutively according to the array starting with channel 1.
+
+```
+msg.payload = [0, 1, 2];
+msg.payload = new UInt8Array([0, 1, 2]);
+```
+
 You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optionally a number of repetitions.
 
 The value of -1 for 'repeat' forces the the transition to run infinitely until a value or other transition is sent to this channel.
@@ -158,6 +165,9 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### 0.1.5
+* (szekelyisz) added support for `msg,payload` as array to **Art-Net Out**
+
 ### 0.1.4
 * (Bannsaenger) added user defined error handler for dmxnet library. Works with dmxnet > 0.9.0. With versions prior to 0.9.0 the behaviour is like before
 * (Bannsaenger) fixed the transfer of parameter port number to the dmxnet library
