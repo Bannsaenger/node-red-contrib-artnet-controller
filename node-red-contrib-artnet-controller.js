@@ -345,6 +345,18 @@ module.exports = function (RED) {
         };
 
         /**
+         * set the first n values and send out the buffer
+         * @param {Array<number> | TypedArray} values dmx values starting with channel 1
+         */
+        this.setAll = function (values) {
+            const end = Math.min(values.length, 512);
+            for(let i = 0; i != end; i++) {
+                this.set(i + 1, values[i]);
+            }
+            this.sendData();
+        };
+
+        /**
          * set the value for a dmx channel in local and senders datastore
          * @param {number} channel dmx channel to set
          * @param {number} value dam value of selected channel
@@ -487,6 +499,8 @@ module.exports = function (RED) {
                     }
                     this.debug(`[input] now sending buckets`);
                     this.sendData();
+                } else if(msg.payload.constructor === Uint8Array || Array.isArray(msg.payload)) {
+                    this.setAll(msg.payload);
                 } else {
                     this.error(`[input] Invalid payload. No channel, no buckets`);
                 }
