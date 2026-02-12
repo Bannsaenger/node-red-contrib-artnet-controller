@@ -1,4 +1,4 @@
-const dmxlib = require('dmxnet');
+const dmxlib = require('@bannsaenger/dmxnet');
 const utils = require('./utils/arc-transition-utils');
 const transitions = require('./transitioncurves/transitioncurves')
 const artnetutils = require('./utils/artnet-utils');
@@ -350,7 +350,7 @@ module.exports = function (RED) {
          */
         this.setAll = function (values) {
             const end = Math.min(values.length, 512);
-            for(let i = 0; i != end; i++) {
+            for (let i = 0; i != end; i++) {
                 this.set(i + 1, values[i]);
             }
             this.sendData();
@@ -499,7 +499,7 @@ module.exports = function (RED) {
                     }
                     this.debug(`[input] now sending buckets`);
                     this.sendData();
-                } else if(msg.payload.constructor === Uint8Array || Array.isArray(msg.payload)) {
+                } else if (msg.payload.constructor === Uint8Array || Array.isArray(msg.payload)) {
                     this.setAll(msg.payload);
                 } else {
                     this.error(`[input] Invalid payload. No channel, no buckets`);
@@ -777,8 +777,9 @@ module.exports = function (RED) {
          * @returns Array
          */
         this.expandBuckets = function(buckets) {
-            var expBuckets = [];    // expanded buckets
-            var tmpBuckets = [];    // temporary array
+            let expBuckets = [];    // expanded buckets
+            let tmpBuckets = [];    // temporary array
+            let node = this;
             
             for (var bucket of buckets) {
                 tmpBuckets = [];
@@ -787,14 +788,15 @@ module.exports = function (RED) {
                         node.error("fillUntil is to big or less than channel");;
                     }
                     for (var fill = bucket.channel; fill <= bucket.fillUntil; fill++) {
-                        tmpBuckets.push({"channel": fill, "value:": bucket.value});
+                        tmpBuckets.push({"channel": fill, "value": bucket.value});
                     }
                 }
                 else {
-                    tmpBuckets.push({ "channel": bucket.channel, "value:": bucket.value });
+                    tmpBuckets.push({ "channel": bucket.channel, "value": bucket.value });
                 }
                 // Merge the two arrays
                 expBuckets = arrayMerge(expBuckets, tmpBuckets, 'channel');
+                node.warn(`[expandBuckets] expBuckets: ${JSON.stringify(expBuckets)}`);
             }
 
             return expBuckets.sort((a,b) => a.channel - b.channel); // return the expanded and sorted bucket array

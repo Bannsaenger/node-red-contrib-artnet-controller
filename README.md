@@ -59,7 +59,7 @@ msg.payload = {
 
 With the **Art-Net In** node you can receive dmx values. Each **Art-Net In** node must be bound to a existing **Art-Net controller** configuration node.
 
-You must specify a net, subnet and universe. Then the data can be received in form of buckets as described in **Payload format** later in this document or as a Uint8Array with the values of the whole universe.  
+You must specify a net, subnet and universe. Then the data can be received in form of buckets as described in **Payload format** later in this document or as a `Uint8Array` with the values of the whole universe.  
 
 ### Payload format
 
@@ -84,6 +84,21 @@ msg.payload = {
   ]
 };
 ```
+The `buckets` can take another parameter to set more than one channel value at once.
+- `fillUntil` - int: repeat this value until this channel [1, 255]
+
+The `fillUntil` must be larger than `channel`
+
+Example: 
+```
+msg.payload = {
+  "buckets": [
+    {"channel": 1, "value": 255, "fillUntil": 100},
+    {"channel": 101, "value": 11, "fillUntil": 200}
+  ]
+};
+```
+Will set `channel` 1 to 100 with the `value` 255 and `channel` 101 to 200 with the `value` 11
 
 Also by setting the payload to an array of numbers or a `UInt8Array` for consistency with **Art-Net In**. Values will be assigned consecutively according to the array starting with channel 1.
 
@@ -92,11 +107,11 @@ msg.payload = [0, 1, 2];
 msg.payload = new UInt8Array([0, 1, 2]);
 ```
 
-You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optionally a number of repetitions.
+You can also fade to values, either for a single channel or multiple channels. You should specify the `transition`, a `duration` in milliseconds and optionally a number of repetitions.
 
-The value of -1 for 'repeat' forces the the transition to run infinitely until a value or other transition is sent to this channel.
+The value of -1 for `repeat` forces the the transition to run infinitely until a value or other transition is sent to this channel.
 
-If repetition is defined, then a gap between repetitions can also be defined.
+If repetition is defined, then a `gap` between repetitions can also be defined.
 
 The transition ends with the target value, holds and starts again with the value before the transition.
 
@@ -165,15 +180,22 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (Bannsaenger) moved to own fork from dmxnet (@bannsaenger/dmxnet) to have the new error handling
+* (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fillUntil** 
+
 ### 0.1.5
 * (szekelyisz) added support for `msg,payload` as array to **Art-Net Out**
 
 ### 0.1.4
 * (Bannsaenger) added user defined error handler for dmxnet library. Works with dmxnet > 0.9.0. With versions prior to 0.9.0 the behaviour is like before
 * (Bannsaenger) fixed the transfer of parameter port number to the dmxnet library
+* (ServiusHack) fix validation function to use actual data
+* (honza-kasik) added gamma and quadratic curve transitions
 
 ### 0.1.3
 * (Bannsaenger) go back the original dmxnet dependency
+* (JonnyTech) fixed typos in README.md
 
 ### 0.1.2
 * (Bannsaenger) fix transition handling, more steps than values produces now a even timed transition with sometimes the same value in more than one step
@@ -192,7 +214,7 @@ Must be revised.
 ## License
 MIT License
 
-Copyright (c) 2022 Bannsaenger <bannsaenger@gmx.de>
+Copyright (c) 2022 - 2026 Bannsaenger <bannsaenger@gmx.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

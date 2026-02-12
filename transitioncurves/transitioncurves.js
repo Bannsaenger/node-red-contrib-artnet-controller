@@ -12,17 +12,17 @@ class LinearTransition {
         const steps = []
 
         // should we fade up or down?
-        const valuePerStep = (oldValue - newValue) / stepCount;
+        const valuePerStep = (newValue - oldValue) / stepCount;
         const stepDuration = duration / stepCount;
 
         for (let i = 1; i <= stepCount; i++) {
             const iterationValue = oldValue + i * valuePerStep;
 
-            steps.push({
+            steps[i] = {
                 'value' : Math.round(iterationValue),
                 'time' : i * stepDuration,
                 'step' : i
-            });
+            };
         }
         return steps
     }
@@ -59,11 +59,11 @@ class GammaTransition {
             // Interpolate between oldValue and newValue based on the gamma progress
             const interpolatedValue = oldValue + (newValue - oldValue) * gammaProgress;
 
-            steps.push({
+            steps[i] = {
                 'value' : Math.round(interpolatedValue),
                 'time' : i * stepDuration,
                 'step' : i
-            });
+            };
         }
 
         return steps;
@@ -95,11 +95,11 @@ class QuadraticTransition {
             // Interpolate between oldValue and newValue based on the quadratic progress
             const interpolatedValue = oldValue + (newValue - oldValue) * quadraticProgress;
 
-            steps.push({
+            steps[i] = {
                 'value' : Math.round(interpolatedValue),
                 'time' : i * stepDuration,
                 'step' : i
-            });
+            };
         }
 
         return steps;

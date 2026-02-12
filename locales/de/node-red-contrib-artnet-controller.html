@@ -36,6 +36,26 @@ msg.payload = {
     ]
 };
 </pre>
+<h4>Die <code>buckets</code> können einen weiteren Parameter enthalten um mehrere Kanäle gleichzeitig zu setzen.
+<li><code>fillUntil</code> - diesen Wert wiederholen bis zu diesem Kanal <span class="property-type">number [1-255]</span>
+Der Wert <code>fillUntil</code> muss größer sein als <code>channel</code>
+</h4>
+Beispiel: 
+```
+msg.payload = {
+  "buckets": [
+    {"channel": 1, "value": 255, "fillUntil": 100},
+    {"channel": 101, "value": 11, "fillUntil": 200}
+  ]
+};
+```
+Setzt <code>channel</code> 1 bis 100 auf den Wert <code>value</code> 255 und <code>channel</code> 101 to 200 mit dem Wert <code>value</code> 11
+<h4>oder auch ein ganzes Universum gleichzeitig als UInt8Array(512), Arraygröße 1 - 512</h4>
+<pre>
+msg.payload = new UInt8Array[
+    1, 2, 3, 4, 5, ..., 512
+];    
+</pre>
 <h4>Es können auch automatische Veränderungen der Werte auf Zeit stattfinden. Entweder für einen einzelnen Kanal oder für mehrere Kanäle. 
     Es muss dabei die 'transition' als auch die 'duration' in Millisekunden und optional die Anzahl an Wiederholungen angegeben werden.
     Der Wert -1 bei 'repeat' wird diese Transition unendlich oft wiederholt, bis sie durch einen Wert oder eine andere Transition auf diesem Kanal abgebrochen wird.
@@ -86,7 +106,7 @@ msg.payload = {
         <li><code>end</code> - Endwerte der Kanäle (End Punkt)</li>
     </ul>
     <p>Im obigen Beispiel startet der Moving Head bei {pan: 0, tilt: 44} hin zu {pan: 85, tilt: 44}. Mittelpunkt ({pan: 127.5, tilt: 63.75}) gibt den nominellen Kreismittelpunkt an
-        Der Wert 'repeat' kann auf für diese Transaktion angegeben werden.
+        Der Wert 'repeat' kann auch für diese Transaktion angegeben werden.
     </p>
 
     <h3>Details</h3>

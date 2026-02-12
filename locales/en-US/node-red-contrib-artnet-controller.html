@@ -37,6 +37,26 @@ msg.payload = {
     ]
 };
 </pre>
+<h4>The <code>buckets</code> can take another parameter to set more than one channel value at once.
+<li><code>fillUntil</code> - repeat this value until this channel <span class="property-type">number [1-255]</span>
+The <code>fillUntil</code> must be larger than <code>channel</code>
+</h4>
+Example: 
+```
+msg.payload = {
+  "buckets": [
+    {"channel": 1, "value": 255, "fillUntil": 100},
+    {"channel": 101, "value": 11, "fillUntil": 200}
+  ]
+};
+```
+Will set <code>channel</code> 1 to 100 with the <code>value</code> 255 and <code>channel</code> 101 to 200 with the <code>value</code> 11
+<h4>or a whole universe as UInt8Array(512), Arraysize 1 - 512</h4>
+<pre>
+msg.payload = new UInt8Array[
+    1, 2, 3, 4, 5, ..., 512
+];    
+</pre>
 <h4>You can also fade to values, either for a single channel or multiple channels. You should specify the 'transition', a 'duration' in milliseconds and optional a number of repetitions. 
     The value of -1 in 'repeat', forces the the transition to run infinitely till a value or other transtion is send on this channel.
     If a repetition is defined, a gap between repetitions can be defined. The transition ends with the target value, holds and starts again with the value before the transition.
@@ -53,7 +73,7 @@ msg.payload = {
     ]
 }
 </pre>
-<h4>Optional you can define start values. These will not be sent immediately. Can also be specified in the trasition payload as well.</h4>
+<h4>Optional you can define start values. These will not be sent immediately. Can also be specified in the transition payload as well.</h4>
 <pre>
     msg.payload = {
         "start_buckets": [
