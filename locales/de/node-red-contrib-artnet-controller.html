@@ -37,19 +37,21 @@ msg.payload = {
 };
 </pre>
 <h4>Die <code>buckets</code> können einen weiteren Parameter enthalten um mehrere Kanäle gleichzeitig zu setzen.
-<li><code>fillUntil</code> - diesen Wert wiederholen bis zu diesem Kanal <span class="property-type">number [1-255]</span>
+    <ul>
+        <li><code>fillUntil</code> - diesen Wert wiederholen bis zu diesem Kanal [2-512]</li>
+    </ul>
 Der Wert <code>fillUntil</code> muss größer sein als <code>channel</code>
 </h4>
 Beispiel: 
-```
+<pre>
 msg.payload = {
   "buckets": [
     {"channel": 1, "value": 255, "fillUntil": 100},
     {"channel": 101, "value": 11, "fillUntil": 200}
   ]
 };
-```
-Setzt <code>channel</code> 1 bis 100 auf den Wert <code>value</code> 255 und <code>channel</code> 101 to 200 mit dem Wert <code>value</code> 11
+</pre>
+Setzt <code>channel</code> 1 bis 100 auf <code>value</code> 255 und <code>channel</code> 101 bis 200 auf <code>value</code> 11
 <h4>oder auch ein ganzes Universum gleichzeitig als UInt8Array(512), Arraygröße 1 - 512</h4>
 <pre>
 msg.payload = new UInt8Array[

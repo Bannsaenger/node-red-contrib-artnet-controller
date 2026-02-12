@@ -85,7 +85,7 @@ msg.payload = {
 };
 ```
 The `buckets` can take another parameter to set more than one channel value at once.
-- `fillUntil` - int: repeat this value until this channel [1, 255]
+- `fillUntil` - int: repeat this value until this channel [2, 512]
 
 The `fillUntil` must be larger than `channel`
 
