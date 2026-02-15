@@ -60,8 +60,8 @@ module.exports = function (RED) {
          * @param {number} universe
          */
         this.registerSender = function(sender, address, port, net, subnet, universe) {
-            var uninet = `${net}:${subnet}:${universe}`;
-            var adport = `${address}:${port}`;
+            const uninet = `${net}:${subnet}:${universe}`;
+            const adport = `${address}:${port}`;
             if (!this.senders.hasOwnProperty(uninet)) this.senders[uninet] = {};
             this.senders[uninet][adport] = sender;
             this.debug(`Added sender ${sender}: new senders: ${JSON.stringify(this.senders, null, 1)}`);
@@ -77,8 +77,8 @@ module.exports = function (RED) {
          * @returns {string} sender
          */
         this.getSender = function(address, port, net, subnet, universe) {
-            var uninet = `${net}:${subnet}:${universe}`;
-            var adport = `${address}:${port}`;
+            const uninet = `${net}:${subnet}:${universe}`;
+            const adport = `${address}:${port}`;
             if (this.senders.hasOwnProperty(uninet)) {
                 // try to find the best address and port combination
                 if (this.senders[uninet].hasOwnProperty(adport)) {
@@ -87,7 +87,7 @@ module.exports = function (RED) {
                 }
                 // now try to find the next best combination
                 for (var key in this.senders[uninet]) {
-                    var locAddr = key.split(':')[0];
+                    const locAddr = key.split(':')[0];
                     if (locAddr === address) {
                         this.debug(`Found match with same address in senders for uninet ${uninet} - ${key}. Sender: ${this.senders[uninet][key]}`);
                         return this.senders[uninet][key];
@@ -171,7 +171,8 @@ module.exports = function (RED) {
         this.nodeContext.set(this.id, {'dmxData': this.dmxData});
 
         // transfer the dmx values to the sender instance
-        for (var i = 0; i < 512; i++) {
+        let i = 0;
+        for (i = 0; i < 512; i++) {
             this.sender.prepChannel(i, this.dmxData[i]);
         }
 
@@ -284,9 +285,9 @@ module.exports = function (RED) {
             return JSON.stringify(object, null, space);
         
             function copyWithoutCircularReferences(references, object) {
-                var cleanObject = {};
+                let cleanObject = {};
                 Object.keys(object).forEach(function(key) {
-                    var value = object[key];
+                    const value = object[key];
                     if (value && typeof value === 'object') {
                         if (references.indexOf(value) < 0) {
                             references.push(value);
@@ -350,7 +351,8 @@ module.exports = function (RED) {
          */
         this.setAll = function (values) {
             const end = Math.min(values.length, 512);
-            for (let i = 0; i != end; i++) {
+            let i = 0;
+            for (i = 0; i != end; i++) {
                 this.set(i + 1, values[i]);
             }
             this.sendData();
@@ -409,7 +411,7 @@ module.exports = function (RED) {
          * @param {boolean} skipDataSending if true no dmx data will be sent after clerance
          */
         this.clearTransition = function (channel, skipDataSending) {
-            var transition = this.transitionsMap[channel];
+            const transition = this.transitionsMap[channel];
 
             if (transition) {
                 this.log(`[clearTransition] Clear transition of channel: ${channel}, skipDataSending: ${skipDataSending}`);
@@ -437,13 +439,16 @@ module.exports = function (RED) {
          * @param {number} channel dmx base channel of the transition
          * @param {string} type type of transition to add
          * @param {number} value startvalue of transition
+         * @param {string} id identification of the transition, for sending status information
          */
-        this.addTransition = function (channel, type, value) {
-            this.debug(`[addTransition] Add transition, transition: ${type} channel: ${channel}, value: ${value}`);
+        this.addTransition = function (channel, type, value, id) {
+            this.debug(`[addTransition] Add transition, transition: ${type}, id: ${id}, channel: ${channel}, value: ${value}`);
             this.clearTransition(channel);
-            var transitionItem = {
+            const transitionItem = {
+                'state': '',
                 'type': type,
-                'channel': channel, 
+                'channel': channel,
+                'id': id || '',
                 'steps': [],
                 'targetValue' : 0,
                 'repeat' : 0,
@@ -472,10 +477,15 @@ module.exports = function (RED) {
          * @param {any} msg the message object routed to this node
          */
         this.input = function(msg) { 
-            var payload = msg.payload;
-            var transition = payload.transition || '';
-            var duration = parseInt(payload.duration || 0);
-            var i = 0;
+            const payload = msg.payload;
+            const transition = payload.transition || '';
+            const duration = parseInt(payload.duration || 0);
+            const repeat = parseInt(payload.repeat || 0);
+            const hold = parseInt(payload.hold || 0);
+            const gap = parseInt(payload.gap || 0);
+            const mirror = payload.mirror ? true : false;
+            const id = payload.id || ``;
+            let i = 0;
 
             this.debug(`[input] received input to sender, payload: ${JSON.stringify(payload)} `);
 
@@ -504,9 +514,7 @@ module.exports = function (RED) {
                 } else {
                     this.error(`[input] Invalid payload. No channel, no buckets`);
                 }
-            } else {
-                // processing transitions
-
+            } else {    // processing transitions
                 // processing start_buckets (only valid in transitions)
                 if (payload.start_buckets && Array.isArray(payload.start_buckets)) {
                     this.debug(`[input] processing start_buckets`);
@@ -552,13 +560,15 @@ module.exports = function (RED) {
                 } else if (["linear", "quadratic", "gamma"].includes(transition)) {
                     if (payload.channel) {
                         this.debug(`[input] add a transition "${transition}" for single value`);
-                        this.addTransition(payload.channel, transition);
-                        this.fadeToValue(payload.channel, payload.value, duration, transition, payload.repeat);
+                        this.clearTransition(payload.buckets[i].channel, false);
+                        this.addTransition(payload.channel, transition, undefined, id);
+                        this.fadeToValue(payload.channel, payload.value, duration, transition, repeat, gap, hold, mirror);
                     } else if (Array.isArray(payload.buckets)) {
                         this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
-                            this.addTransition(payload.buckets[i].channel, transition);
-                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, payload.repeat, payload.gap, payload.hold, payload.mirror);
+                            this.clearTransition(payload.buckets[i].channel, false);
+                            this.addTransition(payload.buckets[i].channel, transition, undefined, id);
+                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, repeat, gap, hold, mirror);
                         }
                     } else {
                         this.error(`[input] Invalid payload. No channel, no buckets in transition "${transition}"`);
@@ -580,11 +590,11 @@ module.exports = function (RED) {
          * @param {boolean} mirror (optional) Mirror the transition after the hold time (e.g. fade up and down)
          */
         this.fadeToValue = function (channel, newValue, duration, transitionType, repeat = 0, gap = 0, hold = 0, mirror = false) {
-            var oldValue = this.get(channel);
-            var stepCount = Math.ceil(duration / this.senderClock);
-            var gapSteps = Math.ceil(gap / this.senderClock);
-            var holdSteps = Math.ceil(hold / this.senderClock);
-            var transition = this.transitionsMap[channel];
+            const oldValue = this.get(channel);
+            const stepCount = Math.ceil(duration / this.senderClock);
+            const gapSteps = Math.ceil(gap / this.senderClock);
+            const holdSteps = Math.ceil(hold / this.senderClock);
+            const transition = this.transitionsMap[channel];
             if (!transition) {
                 this.warn(`[fadeToValue] called with channel: ${channel}. No transition in progress !!`);
                 return;    
@@ -772,7 +782,7 @@ module.exports = function (RED) {
         };
 
         /**
-         * Expand the buckets if fillUntil is given
+         * Expand the buckets if fill is given
          * @param {Array} buckets The buckets structure to expand
          * @returns Array
          */
@@ -783,11 +793,11 @@ module.exports = function (RED) {
             
             for (var bucket of buckets) {
                 tmpBuckets = [];
-                if (bucket.hasOwnProperty("fillUntil")) {
-                    if (bucket.fillUntil < bucket.channel || bucket.fillUntil > 512) {
-                        node.error("fillUntil is to big or less than channel");;
+                if (bucket.hasOwnProperty("fill")) {
+                    if (bucket.fill < bucket.channel || bucket.fill > 512) {
+                        node.error("fill is to big or less than channel");;
                     }
-                    for (var fill = bucket.channel; fill <= bucket.fillUntil; fill++) {
+                    for (var fill = bucket.channel; fill <= bucket.fill; fill++) {
                         tmpBuckets.push({"channel": fill, "value": bucket.value});
                     }
                 }
@@ -810,7 +820,7 @@ module.exports = function (RED) {
          * @returns {Array}
          */
         function arrayMerge(a, b, prop) {
-            var reduced = a.filter(aitem => !b.find(bitem => aitem[prop] === bitem[prop]))
+            const reduced = a.filter(aitem => !b.find(bitem => aitem[prop] === bitem[prop]))
             return reduced.concat(b);
         }
 
@@ -843,8 +853,10 @@ module.exports = function (RED) {
 
         this.on('input', function (msg) {
             this.trace(`get payload: ${JSON.stringify(msg.payload)}`);
-            var payload = msg.payload;
-            var locNet, locSubnet, locUniverse;
+            const payload = msg.payload;
+            let locNet;
+            let locSubnet;
+            let locUniverse;
             // check if ignore address is set
             if (this.ignoreaddress) {
                 this.debug(`[input] ignore address is set, routing to default sender`);
@@ -931,9 +943,9 @@ module.exports = function (RED) {
         // Dump data if DMX Data is received
         this.receiver.on('data', function(data) {
             //console.log('DMX data:', data); // eslint-disable-line no-console
-            var msg = {};
-            var buckets = [];
-            var i = 0;
+            let msg = {};
+            let buckets = [];
+            let i = 0;
             if (!this.sendonchange || !equals(this.dmxData, data)) {    // sendonchange = false OR data changed
                 if (!this.sendonchange) {                               // send in any case
                     if (this.outformat == 'buckets') {
@@ -969,7 +981,7 @@ module.exports = function (RED) {
      RED.httpAdmin.get("/ips", RED.auth.needsPermission('artnet.read'), function(req,res) {
         try {
             const nets = networkInterfaces();
-            var IPs4 = [{name: '[IPv4] 0.0.0.0 - ' + RED._("artnet.names.allips"), address: '0.0.0.0', family: 'ipv4'}];
+            let IPs4 = [{name: '[IPv4] 0.0.0.0 - ' + RED._("artnet.names.allips"), address: '0.0.0.0', family: 'ipv4'}];
             // IPv6 not implemented yet
             //var IPs6 = [{name: '[IPv6] ::',      address: '::',      family: 'ipv6'}];
             for (const name of Object.keys(nets)) {     // Lookup all interfaces

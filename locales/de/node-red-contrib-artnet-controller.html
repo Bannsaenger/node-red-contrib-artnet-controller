@@ -38,16 +38,16 @@ msg.payload = {
 </pre>
 <h4>Die <code>buckets</code> können einen weiteren Parameter enthalten um mehrere Kanäle gleichzeitig zu setzen.
     <ul>
-        <li><code>fillUntil</code> - diesen Wert wiederholen bis zu diesem Kanal [2-512]</li>
+        <li><code>fill</code> - diesen Wert wiederholen bis zu diesem Kanal [2-512]</li>
     </ul>
-Der Wert <code>fillUntil</code> muss größer sein als <code>channel</code>
+Der Wert <code>fill</code> muss größer sein als <code>channel</code>
 </h4>
 Beispiel: 
 <pre>
 msg.payload = {
   "buckets": [
-    {"channel": 1, "value": 255, "fillUntil": 100},
-    {"channel": 101, "value": 11, "fillUntil": 200}
+    {"channel": 1, "value": 255, "fill": 100},
+    {"channel": 101, "value": 11, "fill": 200}
   ]
 };
 </pre>

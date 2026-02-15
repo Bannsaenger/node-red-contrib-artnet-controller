@@ -85,16 +85,16 @@ msg.payload = {
 };
 ```
 The `buckets` can take another parameter to set more than one channel value at once.
-- `fillUntil` - int: repeat this value until this channel [2, 512]
+- `fill` - int: repeat this value until this channel [2, 512]
 
-The `fillUntil` must be larger than `channel`
+The `fill` must be larger than `channel`
 
 Example: 
 ```
 msg.payload = {
   "buckets": [
-    {"channel": 1, "value": 255, "fillUntil": 100},
-    {"channel": 101, "value": 11, "fillUntil": 200}
+    {"channel": 1, "value": 255, "fill": 100},
+    {"channel": 101, "value": 11, "fill": 200}
   ]
 };
 ```
@@ -109,17 +109,22 @@ msg.payload = new UInt8Array([0, 1, 2]);
 
 You can also fade to values, either for a single channel or multiple channels. You should specify the `transition`, a `duration` in milliseconds and optionally a number of repetitions.
 
+If `mirror` is defined the transition will be mirrored after the optional `hold` value.
+
 The value of -1 for `repeat` forces the the transition to run infinitely until a value or other transition is sent to this channel.
 
 If repetition is defined, then a `gap` between repetitions can also be defined.
 
-The transition ends with the target value, holds and starts again with the value before the transition.
+The transition ends with the target value, holds while `gap` and starts again with the value before the transition.
 
 ```
 msg.payload = {
     "transition": "linear",
+    "id": "myTransition",
     "duration": 5000,
     "repeat": 1,
+    "mirror": false,
+    "hold": 0,
     "gap": 1000,
     "buckets": [
       {"channel": 1, "value": 255},
@@ -128,8 +133,17 @@ msg.payload = {
 }
 ```
 - `transition` - string: linear, gamma or quadratic
+- `id` - string: user defined id to identify the transition when output is defined
+- `duration` - int: value (in ms)
+- `repeat` - int: value in [-1, MAX_SAFE_INTEGER], -1 repeat infinitely till transition canceled
+- `mirror` - bool: true/false, if true the transition is mirrored
+- `hold` - int: value in [0, MAX_SAFE_INTEGER], time between transition and mirrored part (in ms)
+- `gap` - int: value in [0, MAX_SAFE_INTEGER], gap between transitions (in ms)
 - `channel` - int: address in [1, 512]
 - `value` - int: value in [0, 255]
+or
+- `buckets` - array
+
 
 Optionally you can define start values. These will not be sent immediately. They can also be specified in the transition payload as well.
 
@@ -141,6 +155,8 @@ msg.payload = {
     ]
 };
 ```
+Timing example:
+![timing example](/docs/img/node-red-contrib-artnet-controller_transition_timing.png)
 
 In order to perform an arc transition (movement by arc) you must specify more details:
 
@@ -182,7 +198,7 @@ Must be revised.
 -->
 ### **WORK IN PROGRESS**
 * (Bannsaenger) moved to own fork from dmxnet (@bannsaenger/dmxnet) to have the new error handling
-* (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fillUntil** 
+* (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fill** 
 
 ### 0.1.5
 * (szekelyisz) added support for `msg,payload` as array to **Art-Net Out**
