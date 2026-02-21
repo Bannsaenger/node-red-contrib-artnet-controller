@@ -112,7 +112,7 @@ module.exports = function (RED) {
      * Config node for holding a universe and having the functionality
      * of automatic and timed value transformation
      */
-    function ArtNetSender(config) {
+    function ArtNetSender(config) { 
         RED.nodes.createNode(this, config);
         this.name             = config.name       || '';
         this.artnetcontroller = config.artnetcontroller;
@@ -188,74 +188,194 @@ module.exports = function (RED) {
          * The main system clock timer to handle sending and transitions
          */
         this.mainWorker = setTimeout((function() {
-            var currentTime = Date.now();
+            this.workerFunc();  // execute the main time function
+        }.bind(this)), this.senderClock);
+
+        /**
+         * The corresponding function for the main system clock timer. Can be called separately for immediate execution.
+         */
+        this.workerFunc = function() {
+            // states for state machine:
+            // state = TRANSITION   default, transition in progress
+            //         HOLD         hold time active
+            //         MIRROR       mirrored transition in progress
+            //         GAP          gap time active
+
             // start with transition handling
             for (const currentChannel in this.transitionsMap) {
-                var currentTransaction = this.transitionsMap[currentChannel];
-                if (currentTransaction.currentStep == 1) currentTransaction.startTime = currentTime;
-                if (currentTransaction.currentStep <= currentTransaction.stepsToGo) {       // proceed next step
-                    switch (currentTransaction.type) {
-                        case 'quadratic':
-                        case 'gamma':
-                        case 'linear': 
-                            this.trace(`[mainWorker] (${currentTransaction.type}) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, value: ${currentTransaction.steps[currentTransaction.currentStep].value}`);
-                            this.set(currentChannel, currentTransaction.steps[currentTransaction.currentStep].value);
-                            this.dataDirty = true;
-                            break;
+                // pick the next transaction to handle
+                var curTrans = this.transitionsMap[currentChannel];
 
-                        case 'arc':
-                            // get point in spherical coordinates
-                            var iterationPoint = utils.getIterationPoint(currentTransaction.steps[currentTransaction.currentStep].value, currentTransaction.radius, currentTransaction.backVector, currentTransaction.movement_point);
-                            var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.theta, currentTransaction.arcConfig.tilt_angle));
-                            var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.phi, currentTransaction.arcConfig.pan_angle));
-
-                            this.debug(`[mainWorker] (arc) doing step [${currentTransaction.currentStep}] for channel: ${currentChannel}, sphericalP -> r: ${parseFloat(iterationPoint.r).toFixed(4)}, theta: ${parseFloat(iterationPoint.theta).toFixed(4)}, phi: ${parseFloat(iterationPoint.phi).toFixed(4)}, T: ${parseFloat(currentTransaction.steps[currentTransaction.currentStep].value).toFixed(4)}, pan: ${parseFloat(pan).toFixed(4)}, tilt: ${parseFloat(tilt).toFixed(4)}`);
-                            this.set(currentTransaction.arcConfig.pan_channel, pan);
-                            this.set(currentTransaction.arcConfig.tilt_channel, tilt);
-                            this.dataDirty = true;
-                            break;
-
-                        default:
-                            this.warn(`[mainWorker] unknown transition: ${currentTransaction.type}`);
-                    }
-                    if (currentTransaction.currentStep == currentTransaction.stepsToGo) {
-                        // only at the end of the transition
-                        this.debug(`[mainWorker] difference between target and actual time : ${currentTime - currentTransaction.startTime - currentTransaction.timeToGo} ms, ${(((currentTime - currentTransaction.startTime - currentTransaction.timeToGo) * 100) / currentTransaction.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`);
-                    }
-                    currentTransaction.currentStep++;
-                } else {                                                                    // check if transition is to repeat
-                    if (currentTransaction.repeat != 0) {
-                        if (currentTransaction.currentRepetition != (currentTransaction.repeat - 1)) {
-                            // if equal the last repetition has been done, if endless repetions .repeat = -1
-                            if (currentTransaction.gapSteps > currentTransaction.currentGapStep) {
-                                // care about the break beween repetitions
-                                currentTransaction.currentGapStep++;
-                            } else {
-                                // care about the repetition, return to the start values
-                                currentTransaction.currentRepetition++;
-                                currentTransaction.currentGapStep = 0;
-                                currentTransaction.currentStep = 1;
-                                if (currentTransaction.startValue) this.set(currentChannel, currentTransaction.startValue);
-                                if (currentTransaction.startPanValue) this.set(currentTransaction.arcConfig.pan_channel, currentTransaction.startPanValue);
-                                if (currentTransaction.startTiltValue) this.set(currentTransaction.arcConfig.tilt_channel, currentTransaction.startTiltValue);
+                // handle TRANSITION (is the default state when transition is added)
+                if (curTrans.state === 'TRANSITION') {
+                    if (curTrans.currentStep <= curTrans.stepsToGo) {       // proceed next step
+                        switch (curTrans.type) {
+                            case 'sine':
+                            case 'quadratic':
+                            case 'gamma':
+                            case 'linear': 
+                                let actValue = 0;
+                                if (curTrans.type === 'gamma') {
+                                    actValue = transitions.TransitionFactory(curTrans.type).computeValue(curTrans.startValue, curTrans.targetValue, curTrans.stepsToGo, curTrans.currentStep, curTrans.gamma);
+                                } else {
+                                    actValue = transitions.TransitionFactory(curTrans.type).computeValue(curTrans.startValue, curTrans.targetValue, curTrans.stepsToGo, curTrans.currentStep);
+                                }
+                                this.trace(`[mainWorker] (${curTrans.type}) doing step [${curTrans.currentStep}] for channel: ${currentChannel}, value: ${actValue}`);
+                                this.set(currentChannel, actValue);
                                 this.dataDirty = true;
+                                break;
+
+                            case 'arc':
+                                // get point in spherical coordinates
+                                var iterationPoint = utils.getIterationPoint(curTrans.steps[curTrans.currentStep].value, curTrans.radius, curTrans.backVector, curTrans.movement_point);
+                                var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.theta, curTrans.arcConfig.tilt_angle));
+                                var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.phi, curTrans.arcConfig.pan_angle));
+
+                                this.debug(`[mainWorker] (arc) doing step [${curTrans.currentStep}] for channel: ${currentChannel}, sphericalP -> r: ${parseFloat(iterationPoint.r).toFixed(4)}, theta: ${parseFloat(iterationPoint.theta).toFixed(4)}, phi: ${parseFloat(iterationPoint.phi).toFixed(4)}, T: ${parseFloat(curTrans.steps[curTrans.currentStep].value).toFixed(4)}, pan: ${parseFloat(pan).toFixed(4)}, tilt: ${parseFloat(tilt).toFixed(4)}`);
+                                this.set(curTrans.arcConfig.pan_channel, pan);
+                                this.set(curTrans.arcConfig.tilt_channel, tilt);
+                                this.dataDirty = true;
+                                break;
+
+                            default:
+                                this.warn(`[mainWorker] unknown transition: ${curTrans.type}`);
+                        }
+                        if (curTrans.currentStep === curTrans.stepsToGo) {
+                            // only at the end of the transition
+                            curTrans.state = 'HOLD';
+                            curTrans.currentStep = 0;     // because this will be the first HOLD step
+                            const currentTime = Date.now();
+                            this.debug(`[mainWorker] difference between target and actual time : ${currentTime - curTrans.startTime - curTrans.timeToGo } ms, ${(((currentTime - curTrans.startTime - curTrans.timeToGo) * 100) / curTrans.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state HOLD`);
+                        } else {
+                            curTrans.currentStep++;
+                        }
+                    }
+                }
+
+                // handle HOLD
+                if (curTrans.state === 'HOLD') {
+                    if ((curTrans.holdSteps > 0) && (curTrans.currentStep <= curTrans.holdSteps)) {
+                        curTrans.currentStep++;
+                    } else {
+                        this.trace(`[mainWorker] going to state MIRROR for channel: ${currentChannel}`);
+                        curTrans.state = 'MIRROR';
+                        curTrans.currentStep = 0;     // because this will be the first MIRROR step
+                    }
+                }
+                
+                // handle MIRROR
+                if (curTrans.state === 'MIRROR') {
+                    if (curTrans.mirror) {
+                        if (curTrans.currentStep <= curTrans.stepsToGo) {       // proceed next step
+                            switch (curTrans.type) {
+                                case 'sine':
+                                case 'quadratic':
+                                case 'gamma':
+                                case 'linear': 
+                                    // do the transition the other way round from target to start
+                                    let actValue = 0;
+                                    if (curTrans.type === 'gamma') {
+                                        actValue = transitions.TransitionFactory(curTrans.type).computeValue(curTrans.targetValue, curTrans.startValue, curTrans.stepsToGo, curTrans.currentStep, curTrans.gamma);
+                                    } else {
+                                        actValue = transitions.TransitionFactory(curTrans.type).computeValue(curTrans.targetValue, curTrans.startValue, curTrans.stepsToGo, curTrans.currentStep);
+                                    }
+                                    this.trace(`[mainWorker] (${curTrans.type}) doing step [${curTrans.currentStep}] for channel: ${currentChannel}, value: ${actValue}`);
+                                    this.set(currentChannel, actValue);
+                                    this.dataDirty = true;
+                                    break;
+
+                                case 'arc':
+                                    // get point in spherical coordinates
+                                    var iterationPoint = utils.getIterationPoint(curTrans.steps[curTrans.currentStep].value, curTrans.radius, curTrans.backVector, curTrans.movement_point);
+                                    var tilt = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.theta, curTrans.arcConfig.tilt_angle));
+                                    var pan = artnetutils.validateChannelValue(artnetutils.radToChannelValue(iterationPoint.phi, curTrans.arcConfig.pan_angle));
+
+                                    this.debug(`[mainWorker] (arc, MIRROR) doing step [${curTrans.currentStep}] for channel: ${currentChannel}, sphericalP -> r: ${parseFloat(iterationPoint.r).toFixed(4)}, theta: ${parseFloat(iterationPoint.theta).toFixed(4)}, phi: ${parseFloat(iterationPoint.phi).toFixed(4)}, T: ${parseFloat(curTrans.steps[curTrans.stepsToGo - curTrans.currentStep].value).toFixed(4)}, pan: ${parseFloat(pan).toFixed(4)}, tilt: ${parseFloat(tilt).toFixed(4)}`);
+                                    this.set(curTrans.arcConfig.pan_channel, pan);
+                                    this.set(curTrans.arcConfig.tilt_channel, tilt);
+                                    this.dataDirty = true;
+                                    break;
+
+                                default:
+                                    this.warn(`[mainWorker] unknown MIRROR transition: ${curTrans.type}`);
+                            }
+                            if (curTrans.currentStep === curTrans.stepsToGo) {
+                                // only at the end of the transition
+                                this.set(currentChannel, curTrans.startValue);
+                                this.dataDirty = true;
+                                this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                                curTrans.state = 'GAP';
+                                curTrans.currentStep = 0;     // because this will be the first GAP step
+                                //this.debug(`[mainWorker] difference between target and actual time : ${currentTime - curTrans.startTime - curTrans.timeToGo } ms, ${(((currentTime - curTrans.startTime - curTrans.timeToGo) * 100) / curTrans.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`);
+                            } else {
+                                curTrans.currentStep++;
+                            }
+                        }
+                    } else {
+                        this.trace(`[mainWorker] no mirror holdSteps: ${curTrans.holdSteps}, repeat: ${curTrans.repeat}, gapSteps: ${curTrans.gapSteps}, currentStep: ${curTrans.currentStep}`);
+                        // now go back to the startValue depending on repeat and GAP and HOLD
+                        if (curTrans.holdSteps > 0 || curTrans.repeat !== 0 || curTrans.gapSteps > 0) {
+                            this.trace(`[mainWorker] bin hier: currentStep: ${curTrans.currentStep}`);
+                            if (curTrans.currentStep < 0) { // then go back to startValue
+                                this.trace(`[mainWorker] (${curTrans.type}) going back to StartValue: ${curTrans.startValue} for channel: ${currentChannel}. Go to state GAP`);
+                                this.set(currentChannel, curTrans.startValue);
+                                this.dataDirty = true;
+
+                                // finished. Go to GAP
+                                this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                                curTrans.state = 'GAP';
+                                curTrans.currentStep = 0;   // because this will be the first GAP step
+                            } else {
+                                curTrans.currentStep = -1;  // do one step and go back to startValue, stay in MIRROR state
+                                this.trace(`[mainWorker] bin hier und mache: currentStep: ${curTrans.currentStep}`);
+//                                this.mainWorker.refresh();  // do the next step
+                            }
+                        } else {
+                            // nothing to do. Go to GAP
+                            this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                            curTrans.state = 'GAP';
+                            curTrans.currentStep = 0;   // because this will be the first GAP step
+                        }
+                    }
+                }
+                
+                
+                // handle GAP
+                if (curTrans.state === 'GAP') {
+                    if ((curTrans.gapSteps > 0) && (curTrans.currentStep <= curTrans.gapSteps)) {
+                        curTrans.currentStep++;
+                    } else {
+                        const currentTime = Date.now();
+                        const overallTimeToGo = currentTime - curTrans.startTime - curTrans.timeToGo - (curTrans.mirror ? curTrans.timeToGo : this.senderClock) - ((curTrans.gapSteps + curTrans.holdSteps ) * this.senderClock);
+                        this.debug(`[mainWorker] difference between target and actual time : ${overallTimeToGo} ms (positive = took too long, negative = to fast).`);
+                        if (curTrans.repeat != 0) {
+                            if (curTrans.currentRepetition != (curTrans.repeat - 1)) {
+                                // care about the repetition, return to the start values
+                                curTrans.currentRepetition++;
+                                curTrans.currentStep = 1;
+//                                if (curTrans.startValue) this.set(currentChannel, curTrans.startValue);
+                                if (curTrans.startPanValue) this.set(curTrans.arcConfig.pan_channel, curTrans.startPanValue);
+                                if (curTrans.startTiltValue) this.set(curTrans.arcConfig.tilt_channel, curTrans.startTiltValue);
+                                this.dataDirty = true;
+                                curTrans.state = 'TRANSITION';
+                                curTrans.currentStep = 0;   // because this will be the first TRANSITION step
+                            } else {
+                                // remove the transition
+                                this.clearTransition(currentChannel, true);
                             }
                         } else {
                             // remove the transition
                             this.clearTransition(currentChannel, true);
                         }
-                    } else {
-                        // remove the transition
-                        this.clearTransition(currentChannel, true);
                     }
                 }
             }
             // now take care of sending
             if (this.dataDirty) {
                 this.dataDirty = false;
-                this.sendActive = true;      // for security reasons
+                this.sendActive = true;     // for security reasons
+                this.mainWorker.refresh();  // refresh before transitting because this takes about 2ms
                 this.sender.transmit();
-                this.mainWorker.refresh();
                 this.trace(`[mainWorker] Transmitting on isDirty, reset dataDirty flag and retrigger mainWorker`);
             } else {
                 // last call of timer. Reset send delay.
@@ -270,7 +390,7 @@ module.exports = function (RED) {
                 } 
             }
             return;
-        }.bind(this)), this.senderClock);
+        };
 
         /**
          * Stringify a object without circular references
@@ -329,8 +449,8 @@ module.exports = function (RED) {
             } else {                        // first call with direct transmission
                 this.dataDirty = false;
                 this.sendActive = true;
+                this.mainWorker.refresh();  // refresh before transitting because this takes about 2ms
                 this.sender.transmit();
-                this.mainWorker.refresh();
                 this.trace(`[sendData] Transmitting spontaneous, set sendActive and retrigger mainWorker`);
             }
         };
@@ -410,14 +530,14 @@ module.exports = function (RED) {
          * @param {number} channel dmx base channel of the transition
          * @param {boolean} skipDataSending if true no dmx data will be sent after clerance
          */
-        this.clearTransition = function (channel, skipDataSending) {
+        this.clearTransition = function (channel, skipDataSending = false) {
             const transition = this.transitionsMap[channel];
 
             if (transition) {
                 this.log(`[clearTransition] Clear transition of channel: ${channel}, skipDataSending: ${skipDataSending}`);
                 // set end value immediately
                 if (transition.targetValue) {
-                    this.set(channel, transition.targetValue);
+//                    this.set(channel, transition.targetValue);
                 }
                 if (transition.targetPanValue) {
                     this.set(transition.arcConfig.pan_channel, transition.targetPanValue);
@@ -436,36 +556,52 @@ module.exports = function (RED) {
 
         /**
          * add a transition to the 
-         * @param {number} channel dmx base channel of the transition
-         * @param {string} type type of transition to add
-         * @param {number} value startvalue of transition
-         * @param {string} id identification of the transition, for sending status information
+         * @param {number} channel - dmx base channel of the transition
+         * @param {string} type - type of transition to add
+         * @param {number} startValue - startvalue of transition
+         * @param {number} targetValue - Value to go to
+         * @param {number} duration - Total time the transition (without hold and gap) should take
+         * @param {number} repeat - (optional) Number of repetitions to do
+         * @param {number} gap - (optional) Value in ms to wait between repetitions 
+         * @param {number} hold - (optional) Value in ms to hold the new_value
+         * @param {boolean} mirror - (optional) Mirror the transition after the hold time (e.g. fade up and down)
+         * @param {string} originator - original OutNode, for sending back status information
+         * @param {string} id - identification of the transition, for sending back status information
+         * @param {number} gamma - gamma factor for gamma transition
          */
-        this.addTransition = function (channel, type, value, id) {
-            this.debug(`[addTransition] Add transition, transition: ${type}, id: ${id}, channel: ${channel}, value: ${value}`);
+        this.addTransition = function (channel, type, startValue, targetValue, duration, repeat, gap, hold, mirror, originator, id, gamma) {
+            this.debug(`[addTransition] Add transition, transition: ${type}, id: ${id}, channel: ${channel}, targetValue: ${targetValue}`);
+
+            const stepCount = Math.ceil(duration / this.senderClock);
+            const gapSteps = Math.ceil(gap / this.senderClock);
+            const holdSteps = Math.ceil(hold / this.senderClock);
+            const transition = this.transitionsMap[channel];
+
+            this.debug(`[addTransition] called with channel: ${channel}, targetValue: ${targetValue}, duration: ${duration}, starting from value: ${startValue}, repeat: ${repeat}, gapSteps: ${gap}`);
+            this.trace(`[addTransition] Maps after addTransition: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
+
             this.clearTransition(channel);
             const transitionItem = {
-                'state': '',
+                'state': 'TRANSITION',
                 'type': type,
                 'channel': channel,
+                'originator': originator || '',
                 'id': id || '',
-                'steps': [],
-                'targetValue' : 0,
-                'repeat' : 0,
-                'gapSteps' : 0,
-                'currentGapStep' : 0,
+                'startValue' : startValue || 0,
+                'targetValue' : targetValue || 0,
+                'mirror': mirror || false,
+                'repeat' : repeat || 0,
+                'gapSteps' : gapSteps || 0,
+                'holdSteps': holdSteps || 0,
                 'currentRepetition' : 0,
-                'currentStep' : 1,
-                'startValue' : 0,
-                'stepsToGo' : 0,
-                'startTime' : 0,
-                'timeToGo' : 0
+                'currentStep' : 0,
+                'stepsToGo' : stepCount || 0,
+                'startTime' : Date.now(),
+                'timeToGo' : duration || 0,
+                'gamma' : gamma || 2.2
             };
-            if (value) {
-                transitionItem.value = parseInt(value);
-            }
             this.transitionsMap[channel] = transitionItem;
-//            this.trace(`[addTransition] Maps after addTransition:\ntransitionsMap: ${this.cleanStringify(this.transitionsMap)}\ncloseCallbacksMap: ${this.cleanStringify(this.closeCallbacksMap)}`);
+            this.trace(`[addTransition] Maps after addTransition:\ntransitionsMap: ${this.cleanStringify(this.transitionsMap)}`);
         };
 
         // ##############################################################
@@ -484,7 +620,9 @@ module.exports = function (RED) {
             const hold = parseInt(payload.hold || 0);
             const gap = parseInt(payload.gap || 0);
             const mirror = payload.mirror ? true : false;
-            const id = payload.id || ``;
+            const gamma = payload.gamma || 2.2;
+            const originator = payload.originator || '';
+            const id = payload.id || '';
             let i = 0;
 
             this.debug(`[input] received input to sender, payload: ${JSON.stringify(payload)} `);
@@ -497,34 +635,29 @@ module.exports = function (RED) {
     
             // no transition, only channel processing
             if (transition === '') {
-                if (payload.channel) {
+                if (payload.channel) {                          // channel processing
                     this.debug(`[input] now sending single value`);
                     this.clearTransition(payload.channel, true);
                     this.set(payload.channel, payload.value);
                     this.sendData();
-                } else if (Array.isArray(payload.buckets)) {
+                } else if (Array.isArray(payload.buckets)) {    // buckets processing
                     for (i = 0; i < payload.buckets.length; i++) {
                         this.clearTransition(payload.buckets[i].channel, true);
                         this.set(payload.buckets[i].channel, payload.buckets[i].value);
                     }
                     this.debug(`[input] now sending buckets`);
                     this.sendData();
-                } else if (msg.payload.constructor === Uint8Array || Array.isArray(msg.payload)) {
+                } else if (msg.payload.constructor === Uint8Array || Array.isArray(msg.payload)) {  // universe (UInt8Array) processing
                     this.setAll(msg.payload);
                 } else {
                     this.error(`[input] Invalid payload. No channel, no buckets`);
                 }
             } else {    // processing transitions
+                
                 // processing start_buckets (only valid in transitions)
                 if (payload.start_buckets && Array.isArray(payload.start_buckets)) {
                     this.debug(`[input] processing start_buckets`);
                     payload.start_buckets = this.expandBuckets(payload.start_buckets);
-                    for (i = 0; i < payload.start_buckets.length; i++) {
-                        this.clearTransition(payload.start_buckets[i].channel, true);
-                        // skip data sending to device
-                        this.set(payload.start_buckets[i].channel, payload.start_buckets[i].value);
-                    }
-                    this.sendData();
                 }
 
                 // transition: arc (as done by gunnebo)
@@ -557,19 +690,19 @@ module.exports = function (RED) {
                     } catch (e) {
                         this.error("[input] ERROR " + e.message);
                     }
-                } else if (["linear", "quadratic", "gamma"].includes(transition)) {
+                } else if (["linear", "quadratic", "gamma", "sine"].includes(transition)) { // all other transitions
                     if (payload.channel) {
-                        this.debug(`[input] add a transition "${transition}" for single value`);
-                        this.clearTransition(payload.buckets[i].channel, false);
-                        this.addTransition(payload.channel, transition, undefined, id);
-                        this.fadeToValue(payload.channel, payload.value, duration, transition, repeat, gap, hold, mirror);
-                    } else if (Array.isArray(payload.buckets)) {
+                        // make a bucket out of the single channel, overwrite bucket if existes. Single channel takes precedence
+                        payload.buckets = [{"channel": payload.channel, "value": payload.value}];
+                    } 
+                    if (Array.isArray(payload.buckets)) {
                         this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
                             this.clearTransition(payload.buckets[i].channel, false);
-                            this.addTransition(payload.buckets[i].channel, transition, undefined, id);
-                            this.fadeToValue(payload.buckets[i].channel, payload.buckets[i].value, duration, transition, repeat, gap, hold, mirror);
+                            this.addTransition(payload.buckets[i].channel, transition, payload.start_buckets[i].value || this.get(payload.buckets[i].channel), payload.buckets[i].value,
+                                               duration, repeat, gap, hold, mirror, originator, id, gamma);
                         }
+                        this.workerFunc();      // initial timer call. Will refresh himself
                     } else {
                         this.error(`[input] Invalid payload. No channel, no buckets in transition "${transition}"`);
                     }
@@ -577,50 +710,6 @@ module.exports = function (RED) {
                     this.error(`[input] Invalid payload. Unknown transition: "${transition}"`);
                 }
             }
-        };
-
-        /**
-         * Add the steps for a non-arc transition to the transitionsMap and start the transition
-         * @param {number} channel Channel on which this trnsition is done
-         * @param {number} new_value Value to go to
-         * @param {number} duration Total time the transition should take
-         * @param {number} repeat (optional) Number of repetitions to do
-         * @param {number} gap (optional) Value in ms to wait between repetitions 
-         * @param {number} hold (optional) Value in ms to hold the new_value
-         * @param {boolean} mirror (optional) Mirror the transition after the hold time (e.g. fade up and down)
-         */
-        this.fadeToValue = function (channel, newValue, duration, transitionType, repeat = 0, gap = 0, hold = 0, mirror = false) {
-            const oldValue = this.get(channel);
-            const stepCount = Math.ceil(duration / this.senderClock);
-            const gapSteps = Math.ceil(gap / this.senderClock);
-            const holdSteps = Math.ceil(hold / this.senderClock);
-            const transition = this.transitionsMap[channel];
-            if (!transition) {
-                this.warn(`[fadeToValue] called with channel: ${channel}. No transition in progress !!`);
-                return;    
-            }
-
-            this.trace(`[fadeToValue] called with channel: ${channel}, newValue: ${newValue}, duration: ${duration}, starting from value: ${oldValue}, repeat: ${repeat}, gapSteps: ${gap}`);
-
-            // should we fade up or down?
-            var timePerStep = duration / stepCount;
-
-            // set basic values for this transition
-            transition.targetValue = newValue;
-            transition.repeat = repeat;
-            transition.gapSteps = gapSteps;
-            transition.startValue = oldValue;
-            transition.holdSteps = holdSteps;
-            transition.mirror = mirror;
-            transition.timeToGo = timePerStep * stepCount;
-
-            transition.steps = transitions.TransitionFactory(transitionType).computeValues(duration, stepCount, oldValue, newValue)
-
-            transition.stepsToGo = stepCount;
-
-            // start transition
-            this.sendData();
-            this.trace(`[fadeToValue] Maps after fadeToValue: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
         };
 
         /**
@@ -769,7 +858,7 @@ module.exports = function (RED) {
 
             // start transition
             this.sendData();
-            this.trace(`[moveToPointOnArc] Maps after fadeToValue: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
+            this.trace(`[moveToPointOnArc] Maps: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
         };
 
         /**
@@ -806,7 +895,7 @@ module.exports = function (RED) {
                 }
                 // Merge the two arrays
                 expBuckets = arrayMerge(expBuckets, tmpBuckets, 'channel');
-                node.warn(`[expandBuckets] expBuckets: ${JSON.stringify(expBuckets)}`);
+                this.trace(`[expandBuckets] expBuckets: ${JSON.stringify(expBuckets)}`);
             }
 
             return expBuckets.sort((a,b) => a.channel - b.channel); // return the expanded and sorted bucket array
@@ -857,7 +946,8 @@ module.exports = function (RED) {
             let locNet;
             let locSubnet;
             let locUniverse;
-            // check if ignore address is set
+            msg.payload.originator = this.id;   // add the originator (myself) for the sendback of transition events
+           // check if ignore address is set
             if (this.ignoreaddress) {
                 this.debug(`[input] ignore address is set, routing to default sender`);
                 this.senderObject.input(msg);

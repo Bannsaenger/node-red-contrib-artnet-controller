@@ -119,8 +119,8 @@ The transition ends with the target value, holds while `gap` and starts again wi
 
 ```
 msg.payload = {
-    "transition": "linear",
     "id": "myTransition",
+    "transition": "linear",
     "duration": 5000,
     "repeat": 1,
     "mirror": false,
@@ -132,20 +132,20 @@ msg.payload = {
     ]
 }
 ```
-- `transition` - string: linear, gamma or quadratic
 - `id` - string: user defined id to identify the transition when output is defined
+- `transition` - string: the type or form of the transition to go [linear, gamma, quadratic, sine]
+- `gamma` - int: value in [0 - 10] default = 2.2. Only for gamma transition 
 - `duration` - int: value (in ms)
-- `repeat` - int: value in [-1, MAX_SAFE_INTEGER], -1 repeat infinitely till transition canceled
-- `mirror` - bool: true/false, if true the transition is mirrored
-- `hold` - int: value in [0, MAX_SAFE_INTEGER], time between transition and mirrored part (in ms)
-- `gap` - int: value in [0, MAX_SAFE_INTEGER], gap between transitions (in ms)
-- `channel` - int: address in [1, 512]
-- `value` - int: value in [0, 255]
-or
+- `hold` - int: value in [0 - MAX_SAFE_INTEGER], time between transition and mirrored part (in ms)
+- `mirror` - bool: [true/false], if true the transition is mirrored
+- `gap` - int: value in [0 - MAX_SAFE_INTEGER], gap between transitions (in ms)
+- `repeat` - int: value in [-1 - MAX_SAFE_INTEGER], number of repetitions. -1 = repeat infinitely till transition is canceled
+- `channel` - int: address in [1 - 512]
+- `value` - int: value in [0 - 255]
+alternatively
 - `buckets` - array
 
-
-Optionally you can define start values. These will not be sent immediately. They can also be specified in the transition payload as well.
+Optional you can define start values. These will not be sent immediately. They can also be specified in the transition payload as well.
 
 ```
 msg.payload = {
@@ -155,8 +155,10 @@ msg.payload = {
     ]
 };
 ```
+
+![timing example](/docs/img/node-red-contrib-artnet-controller_transition_timing.png "Timing example")
+
 Timing example:
-![timing example](/docs/img/node-red-contrib-artnet-controller_transition_timing.png)
 
 In order to perform an arc transition (movement by arc) you must specify more details:
 
@@ -197,6 +199,9 @@ Must be revised.
     ### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
+* (Bannsaenger) refactor main timer to state machine for handling of **mirror** and **gap**
+* (Bannsaenger) refactor TransitionFactory to compute single values per step while the mainWorker runs
+* (Bannsaenger) added **sine** transition
 * (Bannsaenger) moved to own fork from dmxnet (@bannsaenger/dmxnet) to have the new error handling
 * (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fill** 
 

@@ -75,7 +75,26 @@ msg.payload = {
     ]
 }
 </pre>
-<h4>Optional können immer Startwerte angegeben werden. Diese werden nicht sofort gesendet. Können auch in der transition payload angegeben werden.</h4>
+<h4>Folgende Eigenschaften können angegeben werden</h4>
+<dl class="message-properties">
+    <dt class="optional">id<span class="property-type">string</span></dt>
+    <dd>Benutzerdefinierter Bezeichner um die Transition zu identifizieren wenn Output eingeschaltet ist</dd>
+    <dt>transition<span class="property-type">string [linear, gamma, quadratic, sine]</span></dt>
+    <dd>Der Typ bzw. die Form der Transition die ausgeführt werden soll</dd>
+    <dt class="optional">gamma<span class="property-type">number [0-10]</span></dt>
+    <dd>gamma factor. Nur für die gamma Transition. default: 2.2</dd>
+    <dt>duration<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>Ausführungszeit für die Transition</dd>
+    <dt class="optional">hold<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>Zeit zwischen der Transition und dem gespiegelten Teil</dd>
+    <dt class="optional">mirror<span class="property-type">boolean</span></dt>
+    <dd>Bei true wird die Transition gespiegelt</dd>
+    <dt class="optional">gap<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>Zeit zwischen den Transitions</dd>
+    <dt class="optional">repeat<span class="property-type">number [-1 - MAX_SAFE_INTEGER]</span></dt>
+    <dd>Anzahl an Wiederholungen. -1 = Wiederholung bis die Transition abgebrochen wird.</dd>
+</dl>
+<h4>Optional können immer Startwerte angegeben werden. Die Transition beginnt dann mit diesem Wert.</h4>
 <pre>
     msg.payload = {
         "start_buckets": [

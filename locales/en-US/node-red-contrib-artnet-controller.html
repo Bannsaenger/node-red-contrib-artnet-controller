@@ -76,7 +76,26 @@ msg.payload = {
     ]
 }
 </pre>
-<h4>Optional you can define start values. These will not be sent immediately. Can also be specified in the transition payload as well.</h4>
+<h4>You can add the folloing properties</h4>
+<dl class="message-properties">
+    <dt class="optional">id<span class="property-type">string</span></dt>
+    <dd>user defined id to identify the transition when output is defined</dd>
+    <dt>transition<span class="property-type">string [linear, gamma, quadratic, sine]</span></dt>
+    <dd>the type or form of the transition to go</dd>
+    <dt class="optional">gamma<span class="property-type">number [0-10]</span></dt>
+    <dd>gamma factor. Only for a gamma transition. default: 2.2</dd>
+    <dt>duration<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>execution time for the transition</dd>
+    <dt class="optional">hold<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>time between transition and mirrored part</dd>
+    <dt class="optional">mirror<span class="property-type">boolean</span></dt>
+    <dd>if true the transition is mirrored</dd>
+    <dt class="optional">gap<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dd>time between transitions</dd>
+    <dt class="optional">repeat<span class="property-type">number [-1 - MAX_SAFE_INTEGER]</span></dt>
+    <dd>number of repetitions. -1 = repeat infinitely till transition is canceled</dd>
+</dl>
+<h4>Optional you can define start values. The transition then will start at this value.</h4>
 <pre>
     msg.payload = {
         "start_buckets": [
