@@ -50,6 +50,7 @@ msg.payload = {
   "net": 0,
   "subnet": 0,
   "universe": 1
+};
 ```
 - `net` - int: net in [0, 127]
 - `subnet` - int: subnet in [0, 15]
@@ -206,7 +207,7 @@ Must be revised.
 * (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fill** 
 
 ### 0.1.5
-* (szekelyisz) added support for `msg,payload` as array to **Art-Net Out**
+* (szekelyisz) added support for `msg.payload` as array to **Art-Net Out**
 
 ### 0.1.4
 * (Bannsaenger) added user defined error handler for dmxnet library. Works with dmxnet > 0.9.0. With versions prior to 0.9.0 the behaviour is like before
