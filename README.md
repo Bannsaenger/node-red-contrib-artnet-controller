@@ -199,7 +199,7 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.2.0
 * (Bannsaenger) added possibility to send feedback messages on transition states
 * (Bannsaenger) refactor main timer to state machine for handling of **mirror** and **gap**
 * (Bannsaenger) refactor TransitionFactory to compute single values per step while the mainWorker runs

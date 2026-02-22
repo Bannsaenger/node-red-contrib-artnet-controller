@@ -1,6 +1,6 @@
 {
   "name": "@bannsaenger/node-red-contrib-artnet-controller",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Node-RED node that controls lights via Art-Net. Acts as a Art-Net controller.",
   "dependencies": {
     "@bannsaenger/dmxnet": ">=0.9.1"
