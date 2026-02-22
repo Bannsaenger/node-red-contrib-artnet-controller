@@ -243,11 +243,13 @@ module.exports = function (RED) {
                         }
                         if (curTrans.currentStep === curTrans.stepsToGo) {
                             // only at the end of the transition
+                            curTrans.overallTimeToGo += curTrans.timeToGo;
+                            const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo;
+                            const performText = `difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`;
+                            RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, curTrans.state, curTrans.currentRepetition, performText);
+                            this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. Go to state HOLD`);
                             curTrans.state = 'HOLD';
                             curTrans.currentStep = 0;     // because this will be the first HOLD step
-                            curTrans.overallTimeToGo += curTrans.timeToGo;
-                            const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
-                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state HOLD`);
                         } else {
                             curTrans.currentStep++;
                         }
@@ -261,7 +263,9 @@ module.exports = function (RED) {
                     } else {
                         curTrans.overallTimeToGo += (curTrans.holdSteps > 0 ? curTrans.holdSteps + 1 : 0) * this.senderClock;
                         const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
-                        this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state MIRROR`);
+                        const performText = `difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`;
+                        RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, curTrans.state, curTrans.currentRepetition, performText);
+                        this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. Go to state MIRROR`);
                         curTrans.state = 'MIRROR';
                         curTrans.currentStep = 0;     // because this will be the first MIRROR step
                     }
@@ -329,7 +333,9 @@ module.exports = function (RED) {
                                 // finished. Go to GAP
                                 curTrans.overallTimeToGo += this.senderClock;
                                 const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
-                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state GAP`);
+                                const performText = `difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`;
+                                RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, curTrans.state, curTrans.currentRepetition, performText);
+                                this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. Go to state GAP`);
                                 curTrans.state = 'GAP';
                                 curTrans.currentStep = 0;   // because this will be the first GAP step
                             } else {
@@ -340,7 +346,9 @@ module.exports = function (RED) {
                             // nothing to do. Go to GAP
                             curTrans.overallTimeToGo += 0;  // no action in this step done
                             const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
-                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state GAP`);
+                            const performText = `difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`;
+                            RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, curTrans.state, curTrans.currentRepetition, performText);
+                            this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. Go to state GAP`);
                             curTrans.state = 'GAP';
                             curTrans.currentStep = 0;   // because this will be the first GAP step
                         }
@@ -355,6 +363,7 @@ module.exports = function (RED) {
                     } else {
                         curTrans.overallTimeToGo += (curTrans.gapSteps > 0 ? curTrans.gapSteps + 1 : 0) * this.senderClock;
                         const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                        const performText = `difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`;
                         if (curTrans.repeat != 0) {
                             if (curTrans.currentRepetition != (curTrans.repeat - 1)) {
                                 // care about the repetition, return to the start values
@@ -363,18 +372,21 @@ module.exports = function (RED) {
                                 if (curTrans.startPanValue) this.set(curTrans.arcConfig.pan_channel, curTrans.startPanValue);
                                 if (curTrans.startTiltValue) this.set(curTrans.arcConfig.tilt_channel, curTrans.startTiltValue);
                                 this.dataDirty = true;
-                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Repeat and go to state TRANSITION`);
+                                RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, 'END', curTrans.currentRepetition, performText);
+                                this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. Go to state TRANSITION`);
                                 curTrans.state = 'TRANSITION';
                                 curTrans.currentStep = 0;   // because this will be the first TRANSITION step
                             } else {
                                 // remove the transition
                                 this.clearTransition(currentChannel, true);
-                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). End of transition`);
+                                RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, 'END', curTrans.currentRepetition, performText);
+                                this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. End of transition`);
                             }
                         } else {
                             // remove the transition
                             this.clearTransition(currentChannel, true);
-                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). End of transition`);
+                            RED.nodes.getNode(curTrans.originator).sendFeedback(curTrans.id, currentChannel, 'END', curTrans.currentRepetition, performText);
+                            this.debug(`[mainWorker] channel: ${currentChannel}, ${performText}. End of transition`);
                         }
                     }
                 }
@@ -950,11 +962,39 @@ module.exports = function (RED) {
         this.name             = config.name       || '';
         this.artnetsender     = config.artnetsender;
         this.ignoreaddress    = typeof config.ignoreaddress === 'undefined' ? false : config.ignoreaddress;
+        this.feedback         = config.feedback;
 
         this.senderObject =  RED.nodes.getNode(this.artnetsender);
         this.controllerObj = RED.nodes.getNode(this.senderObject.artnetcontroller);
 
+        this.trace(`[ArtNetOutNode] Feedback: ${this.feedback}, Outputs: ${this.outputs}`);
+
         this.log(`[ArtNetOutNode] senderObject: ${this.senderObject.type}:${this.senderObject.id}, controllerObj: ${this.controllerObj.type}:${this.controllerObj.id}`);
+
+        /**
+         * Send the feedback to the nodes output
+         * @param {string} id - id of the transition. Must have a value to send a feedback
+         * @param {number} channel - actual channel for which the feedback is sent
+         * @param {number} state - actual state for which the feedback is sent
+         * @param {number} repetition - actual number of repetition
+         * @param {string} perform - string with performance data
+         */
+        this.sendFeedback = function (id, channel, state, repetition, perform) {
+            if (this.feedback === 'none') return;   // nothing to do
+            if (id === '') return;                  // without id no feedback
+            if (this.feedback === 'onlyEnd' && state !== 'END') return;
+            this.send(
+                {
+                    'payload': {
+                        'id': id,
+                        'channel': channel,
+                        'state': state,
+                        'repetition': repetition,
+                        'perform': perform
+                    }
+                }
+            );
+        };
 
         this.on('input', function (msg) {
             this.trace(`get payload: ${JSON.stringify(msg.payload)}`);

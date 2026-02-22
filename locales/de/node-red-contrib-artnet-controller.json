@@ -18,8 +18,16 @@
             "refresh": "Refresh",
             "savevalues": "Werte sichern",
             "ignoreaddress": "Adresse ignorieren",
+            "feedback": "Rückmeldungen senden",
             "outformat": "Format",
             "sendonchange": "Nur Änderungen"
+        },
+        "values": {
+            "none": "Keine",
+            "onlyEnd": "Nur Ende der Transition",
+            "all": "Alles",
+            "buckets": "Buckets",
+            "buffer": "Ganzes Universe als Uint8Array"
         },
         "description": {
             "debug": "<b>Debug Ausgabe von <code>dmxlib</code></b><br>Log Ausgaben unterhalb von <code>warning</code> werden nur an die Konsole für debugging Zwecke gesendet"
@@ -39,7 +47,8 @@
             "maxrate": "Maximale Anzahl an ArtDMX Paketen die gesendet werden können (default 10). Werden die Werte schneller angeliefert wird die spontane Übertragung entsprechend verzögert. (Wertebereich: 0 - 50). Beim Wert 0 wird die spontane Übertragung deaktiviert, so dass die Übertragung der ArtDMX Pakete ausschließlich über den Wert <b>Refresh</b> gesteuert wird.",
             "refresh": "Dieser Wert ist in <b>ms</b> (default 1000).<br>Tipp: Nach diesem Intervall werden die Art-Dmx Daten erneut gesendet, egal ob sie geändert wurden oder nicht. Wird ein Art-Dmx Wert geändert werden die Daten abhängig vom Wert MaxRate sofort gesendet.<br><b>Achtung: Der Wert muss immer größer sein, als die Zeit die durch MaxRate definiert wird. Entfällt wenn MaxRate 0 ist.</b>",
             "savevalues": "Tipp: Wenn aktiviert werden die DMX Werte beim Schließen gesichert, so dass nach einem Deploy die DMX Werte sofort wieder zur Verfügung stehen.",
-            "ignoreaddress": "Tipp: Wenn aktiviert werden alle Adressinformationen aus dem <code>msg</code> Objekt ignoriert. Ansonsten wird versucht ein passendes Universum innerhalb des Controllers zu finden. Wird kein passendes Universum gefunden wird die Message an den konfigurierten Sender weitergeleitet."
+            "ignoreaddress": "Tipp: Wenn aktiviert werden alle Adressinformationen aus dem <code>msg</code> Objekt ignoriert. Ansonsten wird versucht ein passendes Universum innerhalb des Controllers zu finden. Wird kein passendes Universum gefunden wird die Message an den konfigurierten Sender weitergeleitet.",
+            "feedback": "Tip: Wahl der Meneg an Rückmeldungen. Die Rückmeldung wird gesendet wenn die Transition auch ein ID hat."
         },
         "errors": {
             "list": "Auflistung der IP Adressen fehlgeschlagen. Versuchen Sie Node-RED neu zu starten."

@@ -12,7 +12,12 @@
         <label for="node-input-ignoreaddress"><i class="fa fa-ban"></i> <span data-i18n="artnet.label.ignoreaddress"></span></label>
         <input type="checkbox" id="node-input-ignoreaddress" style="display: inline-block; width: auto; vertical-align: top;">
     </div>
+	<div class="form-row">
+        <label for="node-input-artnetsender"><i class="fa fa-replay"></i> <span data-i18n="artnet.label.feedback"></span></label>
+        <input type="text" id="node-input-feedback">
+    </div>
     <div class="form-tips" id="tip-ignoreaddress" hidden><span data-i18n="[html]artnet.tip.ignoreaddress"></span></div>
+    <div class="form-tips" id="tip-feedback" hidden><span data-i18n="[html]artnet.tip.feedback"></span></div>
 </script>
 
 <script type="text/javascript">
@@ -22,10 +27,11 @@
         defaults: {
             name: {value: ""},
             artnetsender: {value: "", type: "Art-Net Sender"},
-            ignoreaddress: {value: false}
+            ignoreaddress: {value: false},
+            feedback: {value: "none"}
         },
         inputs:1,
-        outputs:0,
+        outputs:1,
         align: "right",
         icon: "light.png",
         label: function() {
@@ -34,11 +40,17 @@
         oneditprepare: function () {
             $('#node-input-ignoreaddress').on('focus', function () { $('#tip-ignoreaddress').show(); });
             $('#node-input-ignoreaddress').on('blur', function () { $('#tip-ignoreaddress').hide(); });
+            $('#node-input-feedback').on('focus', function () { $('#tip-feedback').show(); });
+            $('#node-input-feedback').on('blur', function () { $('#tip-feedback').hide(); });
 
             $('#node-input-ignoreaddress').prop('checked', this.savevalues);
+
+            $('#node-input-feedback').typedInput({types:[{value: 'feedback', options: [{value: 'none', label: "None"},{value: 'onlyEnd', label: 'Only end of transition'},{value: 'all', label: 'All'}]}]});
+            $('#node-input-feedback').typedInput('value', value);
         },
         oneditsave: function () {
             this.ignoreaddress = $('#node-input-ignoreaddress').prop('checked');
+            this.feedback = $('#node-input-feedback').typedInput('value');
         }
     });
 </script>

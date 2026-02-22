@@ -18,8 +18,16 @@
             "refresh": "Refresh",
             "savevalues": "Save values",
             "ignoreaddress": "Ignore Address",
+            "feedback": "send Feedback",
             "outformat": "Format",
             "sendonchange": "On change"
+        },
+        "values": {
+            "none": "None",
+            "onlyEnd": "Only end of transition",
+            "all": "All",
+            "buckets": "Buckets",
+            "buffer": "Universe as Uint8Array"
         },
         "description": {
             "debug": "<b>Debug output from <code>dmxlib</code></b><br>Log output below <code>warning</code> are only send to the console for debuging purposes"
@@ -39,7 +47,8 @@
             "maxrate": "Maximum amount of ArtDMX frames to send (default 10). If values arrive in a higher frequency the spontaneous sending will be delayed. Range: 0 - 50. With value 0 wthe spontaneous sending will be deactivated. So the transmission of ArtDMX frames will only be controlled via the value <b>Refresh</b>.",
             "refresh": "This value is in <b>ms</b> (default 1000).<br>Tip: After this interval the Art-Dmx data will be resend regardless of whether the data has been changed. If any Art-Dmx value is changed the data will be sent immediatly dependig of the value of MaxRate. <br><b>Caution: This value must be higher than the time defined by MaxRate. Don't care if MaxRate is 0</b>",
             "savevalues": "Tip: When checked all DMX values are saved to context on close. So the DMX values are immediatly available after deploy.",
-            "ignoreaddress": "Tip: When checked all address information from the <code>msg</code> object will be ignored. Otherwise an attempt is made to find a matching universe inside this controller. If there is no matching universe the data is sent to the configured sender."
+            "ignoreaddress": "Tip: When checked all address information from the <code>msg</code> object will be ignored. Otherwise an attempt is made to find a matching universe inside this controller. If there is no matching universe the data is sent to the configured sender.",
+            "feedback": "Tip: Choose the level of feedback from transitions. The feedback is sent when the transition has an id set."
         },
         "errors": {
             "list": "Listing of ip addresses failed. Try to restart Node-RED."

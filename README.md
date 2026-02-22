@@ -200,6 +200,7 @@ Must be revised.
     ### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
+* (Bannsaenger) added possibility to send feedback messages on transition states
 * (Bannsaenger) refactor main timer to state machine for handling of **mirror** and **gap**
 * (Bannsaenger) refactor TransitionFactory to compute single values per step while the mainWorker runs
 * (Bannsaenger) added **sine** transition
