@@ -5,6 +5,7 @@
     <p>It must be connected to a valid sender instance.</p>
     <p>In general the data received by this node will be passed to the configured sender instance. If there is some address information in the received data 
         it depends on the setting of the <code>Ignore Address</code> checkbox how the further processing will be done.
+        Optionally you ca set a <code>Feedback Level</code> to send informations when transitions are done. If set a output will appear.
     </p>
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -84,7 +85,7 @@ msg.payload = {
     <dd>the type or form of the transition to go</dd>
     <dt class="optional">gamma<span class="property-type">number [0-10]</span></dt>
     <dd>gamma factor. Only for a gamma transition. default: 2.2</dd>
-    <dt>duration<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dt>duration<span class="property-type">number [1 - MAX_SAFE_INTEGER] in ms</span></dt>
     <dd>execution time for the transition</dd>
     <dt class="optional">hold<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
     <dd>time between transition and mirrored part</dd>

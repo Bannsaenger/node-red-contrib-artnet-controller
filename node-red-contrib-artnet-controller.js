@@ -204,7 +204,8 @@ module.exports = function (RED) {
             // start with transition handling
             for (const currentChannel in this.transitionsMap) {
                 // pick the next transaction to handle
-                var curTrans = this.transitionsMap[currentChannel];
+                const curTrans = this.transitionsMap[currentChannel];
+                const currentTime = Date.now();
 
                 // handle TRANSITION (is the default state when transition is added)
                 if (curTrans.state === 'TRANSITION') {
@@ -244,8 +245,9 @@ module.exports = function (RED) {
                             // only at the end of the transition
                             curTrans.state = 'HOLD';
                             curTrans.currentStep = 0;     // because this will be the first HOLD step
-                            const currentTime = Date.now();
-                            this.debug(`[mainWorker] difference between target and actual time : ${currentTime - curTrans.startTime - curTrans.timeToGo } ms, ${(((currentTime - curTrans.startTime - curTrans.timeToGo) * 100) / curTrans.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state HOLD`);
+                            curTrans.overallTimeToGo += curTrans.timeToGo;
+                            const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state HOLD`);
                         } else {
                             curTrans.currentStep++;
                         }
@@ -257,7 +259,9 @@ module.exports = function (RED) {
                     if ((curTrans.holdSteps > 0) && (curTrans.currentStep <= curTrans.holdSteps)) {
                         curTrans.currentStep++;
                     } else {
-                        this.trace(`[mainWorker] going to state MIRROR for channel: ${currentChannel}`);
+                        curTrans.overallTimeToGo += (curTrans.holdSteps > 0 ? curTrans.holdSteps + 1 : 0) * this.senderClock;
+                        const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                        this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state MIRROR`);
                         curTrans.state = 'MIRROR';
                         curTrans.currentStep = 0;     // because this will be the first MIRROR step
                     }
@@ -303,10 +307,11 @@ module.exports = function (RED) {
                                 // only at the end of the transition
                                 this.set(currentChannel, curTrans.startValue);
                                 this.dataDirty = true;
-                                this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                                curTrans.overallTimeToGo += curTrans.timeToGo;
+                                const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state GAP`);
                                 curTrans.state = 'GAP';
                                 curTrans.currentStep = 0;     // because this will be the first GAP step
-                                //this.debug(`[mainWorker] difference between target and actual time : ${currentTime - curTrans.startTime - curTrans.timeToGo } ms, ${(((currentTime - curTrans.startTime - curTrans.timeToGo) * 100) / curTrans.timeToGo).toFixed(1)} % (positive = took too long, negative = to fast)`);
                             } else {
                                 curTrans.currentStep++;
                             }
@@ -322,17 +327,20 @@ module.exports = function (RED) {
                                 this.dataDirty = true;
 
                                 // finished. Go to GAP
-                                this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                                curTrans.overallTimeToGo += this.senderClock;
+                                const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state GAP`);
                                 curTrans.state = 'GAP';
                                 curTrans.currentStep = 0;   // because this will be the first GAP step
                             } else {
                                 curTrans.currentStep = -1;  // do one step and go back to startValue, stay in MIRROR state
                                 this.trace(`[mainWorker] bin hier und mache: currentStep: ${curTrans.currentStep}`);
-//                                this.mainWorker.refresh();  // do the next step
                             }
                         } else {
                             // nothing to do. Go to GAP
-                            this.trace(`[mainWorker] going to state GAP for channel: ${currentChannel}`);
+                            curTrans.overallTimeToGo += 0;  // no action in this step done
+                            const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
+                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Go to state GAP`);
                             curTrans.state = 'GAP';
                             curTrans.currentStep = 0;   // because this will be the first GAP step
                         }
@@ -345,27 +353,28 @@ module.exports = function (RED) {
                     if ((curTrans.gapSteps > 0) && (curTrans.currentStep <= curTrans.gapSteps)) {
                         curTrans.currentStep++;
                     } else {
-                        const currentTime = Date.now();
-                        const overallTimeToGo = currentTime - curTrans.startTime - curTrans.timeToGo - (curTrans.mirror ? curTrans.timeToGo : this.senderClock) - ((curTrans.gapSteps + curTrans.holdSteps ) * this.senderClock);
-                        this.debug(`[mainWorker] difference between target and actual time : ${overallTimeToGo} ms (positive = took too long, negative = to fast).`);
+                        curTrans.overallTimeToGo += (curTrans.gapSteps > 0 ? curTrans.gapSteps + 1 : 0) * this.senderClock;
+                        const overallTimeRequired = currentTime - curTrans.startTime - curTrans.overallTimeToGo
                         if (curTrans.repeat != 0) {
                             if (curTrans.currentRepetition != (curTrans.repeat - 1)) {
                                 // care about the repetition, return to the start values
                                 curTrans.currentRepetition++;
                                 curTrans.currentStep = 1;
-//                                if (curTrans.startValue) this.set(currentChannel, curTrans.startValue);
                                 if (curTrans.startPanValue) this.set(curTrans.arcConfig.pan_channel, curTrans.startPanValue);
                                 if (curTrans.startTiltValue) this.set(curTrans.arcConfig.tilt_channel, curTrans.startTiltValue);
                                 this.dataDirty = true;
+                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). Repeat and go to state TRANSITION`);
                                 curTrans.state = 'TRANSITION';
                                 curTrans.currentStep = 0;   // because this will be the first TRANSITION step
                             } else {
                                 // remove the transition
                                 this.clearTransition(currentChannel, true);
+                                this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). End of transition`);
                             }
                         } else {
                             // remove the transition
                             this.clearTransition(currentChannel, true);
+                            this.debug(`[mainWorker] channel: ${currentChannel}, difference between target and actual time : ${overallTimeRequired} ms, ${((overallTimeRequired * 100) / curTrans.overallTimeToGo).toFixed(1)} % (positive = took too long, negative = to fast). End of transition`);
                         }
                     }
                 }
@@ -389,7 +398,7 @@ module.exports = function (RED) {
                     }
                 } 
             }
-            return;
+             return;
         };
 
         /**
@@ -555,7 +564,7 @@ module.exports = function (RED) {
         };
 
         /**
-         * add a transition to the 
+         * add a transition to the transitionsMap
          * @param {number} channel - dmx base channel of the transition
          * @param {string} type - type of transition to add
          * @param {number} startValue - startvalue of transition
@@ -575,7 +584,10 @@ module.exports = function (RED) {
             const stepCount = Math.ceil(duration / this.senderClock);
             const gapSteps = Math.ceil(gap / this.senderClock);
             const holdSteps = Math.ceil(hold / this.senderClock);
-            const transition = this.transitionsMap[channel];
+            if (!duration) {
+                this.warn(`duration not defioned or 0. Must be 1 - MAXINT`);
+                duration = 1;
+            }
 
             this.debug(`[addTransition] called with channel: ${channel}, targetValue: ${targetValue}, duration: ${duration}, starting from value: ${startValue}, repeat: ${repeat}, gapSteps: ${gap}`);
             this.trace(`[addTransition] Maps after addTransition: transitionsMap: ${this.cleanStringify(this.transitionsMap, 1)}`);
@@ -587,6 +599,7 @@ module.exports = function (RED) {
                 'channel': channel,
                 'originator': originator || '',
                 'id': id || '',
+                'overallTimeToGo': 0,
                 'startValue' : startValue || 0,
                 'targetValue' : targetValue || 0,
                 'mirror': mirror || false,
@@ -699,7 +712,10 @@ module.exports = function (RED) {
                         this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
                             this.clearTransition(payload.buckets[i].channel, false);
-                            this.addTransition(payload.buckets[i].channel, transition, payload.start_buckets[i].value || this.get(payload.buckets[i].channel), payload.buckets[i].value,
+                            let startValue = payload.start_buckets.find(({ channel }) => channel === payload.buckets[i].channel);
+                            if (typeof startValue !== 'undefined') startValue = startValue.value;   // try to fetch the value
+                            if (typeof startValue === 'undefined') startValue = this.get(payload.buckets[i].channel);   // last hope to set the actual old value
+                            this.addTransition(payload.buckets[i].channel, transition, startValue, payload.buckets[i].value,
                                                duration, repeat, gap, hold, mirror, originator, id, gamma);
                         }
                         this.workerFunc();      // initial timer call. Will refresh himself

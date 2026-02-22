@@ -4,6 +4,7 @@
     <p>Er muss mit einer gültigen Sender Instanz verbunden sein.</p>
     <p>Im Allgemeinen werden die empfangenen Daten an die konfigurierte Sender Instanz weitergereicht. Wenn in den empfangenen Daten Adressinformationen enthalten sind,
         hängt es von der Einstellung der <code>Adresse ignorieren</code> Checkbox ab wie die weitere Verarbeitung stattfindet.
+        Optional kann ein <code>Feedback Level</code> gesetzt werden um Informationen über Transitions zu senden. Wenn ein Wert gesetzt wird erscheint ein Ausgang.
     </p>
     <h3>Inputs</h3>
     <dl class="message-properties">
@@ -83,7 +84,7 @@ msg.payload = {
     <dd>Der Typ bzw. die Form der Transition die ausgeführt werden soll</dd>
     <dt class="optional">gamma<span class="property-type">number [0-10]</span></dt>
     <dd>gamma factor. Nur für die gamma Transition. default: 2.2</dd>
-    <dt>duration<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
+    <dt>duration<span class="property-type">number [1 - MAX_SAFE_INTEGER] in ms</span></dt>
     <dd>Ausführungszeit für die Transition</dd>
     <dt class="optional">hold<span class="property-type">number [0 - MAX_SAFE_INTEGER] in ms</span></dt>
     <dd>Zeit zwischen der Transition und dem gespiegelten Teil</dd>

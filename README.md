@@ -136,7 +136,7 @@ msg.payload = {
 - `id` - string: user defined id to identify the transition when output is defined
 - `transition` - string: the type or form of the transition to go [linear, gamma, quadratic, sine]
 - `gamma` - int: value in [0 - 10] default = 2.2. Only for gamma transition 
-- `duration` - int: value (in ms)
+- `duration` - int: value [-1 - MAX_SAFE_INTEGER] (in ms)
 - `hold` - int: value in [0 - MAX_SAFE_INTEGER], time between transition and mirrored part (in ms)
 - `mirror` - bool: [true/false], if true the transition is mirrored
 - `gap` - int: value in [0 - MAX_SAFE_INTEGER], gap between transitions (in ms)
