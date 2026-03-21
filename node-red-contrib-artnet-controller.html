@@ -28,10 +28,11 @@
             name: {value: ""},
             artnetsender: {value: "", type: "Art-Net Sender"},
             ignoreaddress: {value: false},
-            feedback: {value: "none"}
+            feedback: {value: "none"},
+            outputs: {value: 0}
         },
-        inputs:1,
-        outputs:1,
+        inputs: 1,
+        outputs: 0,
         align: "right",
         icon: "light.png",
         label: function() {
@@ -51,6 +52,7 @@
         oneditsave: function () {
             this.ignoreaddress = $('#node-input-ignoreaddress').prop('checked');
             this.feedback = $('#node-input-feedback').typedInput('value');
+            this.outputs = $("#node-input-feedback").typedInput('value') === 'none' ? 0 : 1; 
         }
     });
 </script>

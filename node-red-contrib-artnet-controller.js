@@ -967,6 +967,7 @@ module.exports = function (RED) {
         this.senderObject =  RED.nodes.getNode(this.artnetsender);
         this.controllerObj = RED.nodes.getNode(this.senderObject.artnetcontroller);
 
+        this.outputs = config.outputs || 0;
         this.trace(`[ArtNetOutNode] Feedback: ${this.feedback}, Outputs: ${this.outputs}`);
 
         this.log(`[ArtNetOutNode] senderObject: ${this.senderObject.type}:${this.senderObject.id}, controllerObj: ${this.controllerObj.type}:${this.controllerObj.id}`);

@@ -199,13 +199,16 @@ Must be revised.
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (Bannsaenger) made output of Art-Net Out corresponding to the value of the feedback value
+
 ### 0.2.0
 * (Bannsaenger) added possibility to send feedback messages on transition states
 * (Bannsaenger) refactor main timer to state machine for handling of **mirror** and **gap**
 * (Bannsaenger) refactor TransitionFactory to compute single values per step while the mainWorker runs
 * (Bannsaenger) added **sine** transition
 * (Bannsaenger) moved to own fork from dmxnet (@bannsaenger/dmxnet) to have the new error handling
-* (Bannsaneger) added possibility to set more than one cannel value at once. See parameter **fill** 
+* (Bannsaneger) added possibility to set more than one channel value at once. See parameter **fill** 
 
 ### 0.1.5
 * (szekelyisz) added support for `msg.payload` as array to **Art-Net Out**
