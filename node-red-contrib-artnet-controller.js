@@ -721,10 +721,11 @@ module.exports = function (RED) {
                         payload.buckets = [{"channel": payload.channel, "value": payload.value}];
                     } 
                     if (Array.isArray(payload.buckets)) {
+                        const startBuckets = Array.isArray(payload.start_buckets) ? payload.start_buckets : [];
                         this.debug(`[input] add transitions "${transition}" for some buckets`);
                         for (i = 0; i < payload.buckets.length; i++) {
                             this.clearTransition(payload.buckets[i].channel, false);
-                            let startValue = payload.start_buckets.find(({ channel }) => channel === payload.buckets[i].channel);
+                            let startValue = startBuckets.find(({ channel }) => channel === payload.buckets[i].channel);
                             if (typeof startValue !== 'undefined') startValue = startValue.value;   // try to fetch the value
                             if (typeof startValue === 'undefined') startValue = this.get(payload.buckets[i].channel);   // last hope to set the actual old value
                             this.addTransition(payload.buckets[i].channel, transition, startValue, payload.buckets[i].value,
